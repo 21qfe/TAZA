@@ -1,0 +1,18 @@
+# Python  
+__pycache__/  
+*.py[cod]  
+venv/  
+env/  
+.venv/  
+.env  
+.env.*  
+*.env  
+.vercel/  
+.vscode/  
+.idea/  
+.DS_Store  
+Thumbs.db  
+.pytest_cache/  
+.coverage  
+htmlcov/  
+*.log 
