@@ -8643,9 +8643,9 @@ function initTaza2Llm() {
   // Set greeting if empty
   if (stream.children.length === 0) {
     const farmerName = (window.authState && window.authState.name) ? window.authState.name.split(' ')[0] : "Ananda";
-    const welcomeEn = `Hello ${farmerName}! Welcome to <strong>TAZA 2.0</strong> — your dedicated green agricultural intelligence core powered by OpenAI. I have loaded your farmgate profile in <strong>Hooghly Central Zone</strong> with active MSP floor protection.<br><br>⚡ <strong>Autonomous Task Automation is Ready:</strong> Whenever you ask me to do a task (or switch to <strong>Task</strong> mode), I will automate and deploy the operation directly without redirecting you to separate tabs or forms.<br><br>💡 <em>Tip: You can now view your complete crop revenue and harvest distribution in interactive pie charts!</em>`;
-    const welcomeBn = `নমস্কার ${farmerName}! <strong>TAZA 2.0</strong>-এ আপনাকে স্বাগত — ওপেন এআই চালিত আপনার নিবেদিত সবুজ কৃষি এআই মডেল। যখনই আপনি কোনো কাজ করতে বলবেন, আমি নতুন ট্যাবে না পাঠিয়ে সরাসরি চ্যাটেই কাজটি সম্পন্ন ও ডিপ্লয় করব!`;
-    const welcomeHi = `नमस्ते ${farmerName}! <strong>TAZA 2.0</strong> में आपका स्वागत है — ओपन एआई द्वारा संचालित आपका कृषि मॉडल। किसी भी कार्य के लिए अब नया टैब खोलने की आवश्यकता नहीं है, कार्य यहीं स्वचालित रूप से निष्पादित होगा!`;
+    const welcomeEn = `Hello ${farmerName}! Welcome to <strong>TAZA Agro-Copilot</strong> — your independent agricultural AI platform. How can I help you today?<br><br>• <strong>Ask Any Question:</strong> Crop diseases (late blight, stem borer), balanced NPK fertilization, today's Singur Mandi rates, or weather forecasts.<br>• <strong>Automate Workflows:</strong> Type direct commands like <em>"List 500kg at ₹20"</em>, <em>"Deploy everything"</em>, or <em>"Show revenue pie chart"</em> and I will execute the operation directly in this chat without opening new tabs.`;
+    const welcomeBn = `নমস্কার ${farmerName}! <strong>TAZA Agro-Copilot</strong>-এ আপনাকে স্বাগত। ফসল চাষ, সার, রোগবালাই দমন বা লাইভ মান্ডি দর নিয়ে যেকোনো প্রশ্ন জিজ্ঞেস করুন, অথবা সরাসরি বলুন <em>"List 500kg at ₹20"</em> বা <em>"Deploy everything"</em>—আমি চ্যাটেই কাজটি সম্পন্ন করে দেব!`;
+    const welcomeHi = `नमस्ते ${farmerName}! <strong>TAZA Agro-Copilot</strong> में आपका स्वागत है। फसल, रोग नियंत्रण, उर्वरक या मंडी भाव से संबंधित कोई भी प्रश्न पूछें, या सीधे आदेश दें <em>"List 500kg at ₹20"</em> — कार्य सीधे चैट में पूरा होगा!`;
 
     const welcomeMsg = (currentLanguage === "bn") ? welcomeBn : ((currentLanguage === "hi") ? welcomeHi : welcomeEn);
     appendTaza2Message("bot", welcomeMsg, true);
@@ -8851,10 +8851,12 @@ function applyAutomatedListingToFrontend(details) {
   const qty = parseFloat(details.quantity_kg) || 500.0;
   const price = parseFloat(details.price_per_kg || details.price) || 20.0;
   const category = details.category || "TUBERS";
+  const variety = details.variety || "Chandramukhi Hybrid";
 
   const newProduct = {
     id: details.listing_id || Date.now(),
     crop_name: cropName,
+    variety: variety,
     category: category,
     base_price_per_kg: price,
     pricing_strategy: "DYNAMIC_MANDI_PEG",
@@ -8886,7 +8888,28 @@ function applyAutomatedListingToFrontend(details) {
 
   if (typeof products !== "undefined" && Array.isArray(products)) {
     products.unshift(newProduct);
-    if (typeof renderProducts === "function") renderProducts();
+    if (typeof renderProducts === "function") renderProducts(products);
+  }
+
+  if (typeof currentHarvestAnalyticsData !== "undefined" && currentHarvestAnalyticsData && Array.isArray(currentHarvestAnalyticsData.crop_listings)) {
+    currentHarvestAnalyticsData.crop_listings.unshift({
+      id: newProduct.id,
+      crop_name: cropName,
+      variety: variety,
+      category: category,
+      harvest_date: new Date().toISOString().split("T")[0],
+      total_harvest_kg: qty,
+      sold_kg: 0,
+      remaining_kg: qty,
+      unit_price_inr: price,
+      revenue_earned_inr: 0,
+      warehouse_location: "Singur Hub",
+      status: "ACTIVE",
+      is_organic: true
+    });
+    if (typeof renderFarmerAnalyticsListings === "function") {
+      renderFarmerAnalyticsListings(currentHarvestAnalyticsData.crop_listings, typeof activeAnalyticsCategoryFilter !== "undefined" ? activeAnalyticsCategoryFilter : "ALL");
+    }
   }
 }
 
@@ -9039,29 +9062,36 @@ function handleClientSideAutonomousTask(query) {
     return;
   }
 
-  // C. LIST CROP
-  if (q.includes("list") || q.includes("sell") || q.includes("add crop") || q.includes("ফসল বিক্রি")) {
-    applyAutomatedListingToFrontend({ crop_name: "Jyoti Potato", quantity_kg: 500, price_per_kg: 20 });
+  // C. LIST CROP (Workflow Automation)
+  if (q.includes("list") || q.includes("sell") || q.includes("add crop") || q.includes("ফসল বিক্রি") || q.includes("তালিকা")) {
+    const parsed = parseListingQueryClient(query);
+    applyAutomatedListingToFrontend({
+      crop_name: parsed.cropName,
+      variety: parsed.variety,
+      category: parsed.category,
+      quantity_kg: parsed.qty,
+      price_per_kg: parsed.price
+    });
     const botHtml = `
-      <p>I have automated and deployed your harvest listing directly onto the live consumer catalog and wholesale exchange:</p>
+      <p>I have processed and published your harvest listing directly onto the live consumer catalog and wholesale exchange:</p>
       <div class="taza2-task-receipt-card listing">
         <div class="task-receipt-header">
           <span class="task-badge success"><i data-lucide="check-circle-2"></i> LISTING CREATED &amp; DEPLOYED</span>
           <span class="task-timestamp">Lot #TZ-AGR-${Date.now().toString().slice(-4)}</span>
         </div>
-        <div class="task-receipt-title">🌾 Jyoti Potato (Chandramukhi Hybrid)</div>
+        <div class="task-receipt-title">🌾 ${escapeHtml(parsed.cropName)} (${escapeHtml(parsed.variety)})</div>
         <div class="task-metrics-row">
           <div class="metric-pill">
             <span class="m-label">AVAILABLE STOCK</span>
-            <span class="m-val">500 kg</span>
+            <span class="m-val">${parsed.qty} kg</span>
           </div>
           <div class="metric-pill">
             <span class="m-label">BASE PRICE</span>
-            <span class="m-val">₹20.00 / kg</span>
+            <span class="m-val">₹${parsed.price.toFixed(2)} / kg</span>
           </div>
           <div class="metric-pill">
             <span class="m-label">MSP FLOOR</span>
-            <span class="m-val">₹19.00 / kg</span>
+            <span class="m-val">₹${(parsed.price * 0.95).toFixed(2)} / kg</span>
           </div>
           <div class="metric-pill">
             <span class="m-label">FRESHNESS</span>
@@ -9071,6 +9101,11 @@ function handleClientSideAutonomousTask(query) {
         <p class="task-receipt-desc">
           ✅ Automatically published to TAZA direct consumer catalog with 20% surge profit sharing and Mandi pegging.
         </p>
+        <div style="margin-top:10px; display:flex; gap:8px;">
+          <button type="button" onclick="switchRole('consumer'); scrollToProducts();" style="background:#10b981; color:#064e3b; font-weight:700; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:4px;">
+            <i data-lucide="external-link" style="width:12px;height:12px;"></i> View In Live Marketplace
+          </button>
+        </div>
       </div>
     `;
     appendTaza2Message("bot", botHtml, true);
@@ -9188,14 +9223,93 @@ function handleClientSideAutonomousTask(query) {
     return;
   }
 
-  // Default Farm Intelligence Response
-  const defaultReply = (currentLanguage === "bn")
-    ? `আমি আপনার প্রশ্নটি বিশ্লেষণ করেছি। হুগলি ও পশ্চিমবঙ্গের কৃষির জন্য, ফসল তালিকাভুক্তি, কোল্ড স্টোরেজ সংরক্ষণ এবং লজিস্টিকস আপনি সরাসরি চ্যাট থেকেই স্বয়ংক্রিয়ভাবে সম্পন্ন করতে পারবেন। কোনো নতুন ট্যাব খোলার প্রয়োজন নেই।`
-    : ((currentLanguage === "hi")
-      ? `मैंने आपके प्रश्न का विश्लेषण किया है। फसल सूचीबद्ध करना, कोल्ड स्टोरेज बुक करना, और रसद भेजना अब सीधे चैट से स्वचालित रूप से किया जा सकता है।`
-      : `I have analyzed your agricultural query. On TAZA 2.0, you can ask any farm question or directly automate operations—such as listing crops, booking cold vault space, generating revenue pie charts, or dispatching EV waybills—executed and deployed right inside this conversation stream.`);
+  // G. GREETINGS & SOCIAL (Conversational like ChatGPT / Gemini)
+  const greetings = ["hi", "hello", "hey", "hiya", "howdy", "namaste", "namaskar", "নমস্কার", "হ্যালো", "কেমন আছেন", "good morning", "good evening", "good afternoon"];
+  if (greetings.some(g => q === g || q.startsWith(g + " ") || q.endsWith(" " + g) || q === g + "!" || q === g + ".")) {
+    appendTaza2Message("bot", `Hello! I am <strong>TAZA Agro-Copilot</strong>, your dedicated agricultural intelligence and operations AI. How can I help you today? You can ask me any farming question (crop disease prevention, NPK fertilizer doses, today's Singur Mandi rates, or weather updates), or tell me to directly automate farm tasks—like <em>"List 500kg potato at ₹20"</em>, <em>"Deploy everything"</em>, or <em>"Show my revenue pie chart"</em>.`, true);
+    return;
+  }
 
-  appendTaza2Message("bot", defaultReply);
+  // H. WHO ARE YOU / CAPABILITIES
+  if (q.includes("who are you") || q.includes("what can you do") || q.includes("help") || q.includes("তুমি কে") || q.includes("তোমার কাজ কি")) {
+    appendTaza2Message("bot", `I am <strong>TAZA Agro-Copilot</strong>, an independent agricultural AI platform purpose-built for farmers, FPOs, and direct farmgate-to-consumer trade in West Bengal.<br><br>• <strong>Direct Workflow Automation:</strong> Tell me <em>"List 500kg potato at ₹20"</em> or <em>"Deploy everything"</em>, and I will create the live marketplace listing, lock in your MSP floor price, and sync warehouse records right in this chat.<br>• <strong>Agronomic Advisory:</strong> Detailed diagnosis and treatment schedules for late blight, stem borer, fruit borers, and wilt diseases across Potato, Rice, Brinjal, and Vegetables.<br>• <strong>Mandi Price Intelligence:</strong> Live APMC comparisons for Singur, Champadanga, and Burdwan to help you capture 20%–35% higher profits without middleman commission deductions.<br>• <strong>Cold Storage & Logistics:</strong> Instant space allocation at Singur Hub A-1 and automated EV delivery waybills on NH-19.`, true);
+    return;
+  }
+
+  // I. Conversational Farm AI Fallback
+  const defaultReply = `I've received your query regarding <strong>"${escapeHtml(query)}"</strong>. As your TAZA Agricultural Copilot for Hooghly, I'm here to provide crop management advice, live APMC Mandi insights, or immediately automate your farm workflows. You can ask me specific questions like <em>"How to control potato blight?"</em>, <em>"Today's Singur mandi rate"</em>, or give a command like <em>"List 500kg at ₹20"</em> to automatically publish your produce to our marketplace.`;
+
+  appendTaza2Message("bot", defaultReply, true);
+}
+
+function parseListingCommandClient(query) {
+  const q = query.toLowerCase();
+
+  let cropName = "Jyoti Potato";
+  let category = "TUBERS";
+  let variety = "Chandramukhi Hybrid";
+  let defaultPrice = 20.0;
+
+  if (q.includes("rice") || q.includes("dhan") || q.includes("ধান") || q.includes("gobindobhog")) {
+    cropName = "Gobindobhog Rice";
+    category = "GRAINS";
+    variety = "GI Tagged Fragrant";
+    defaultPrice = 85.0;
+  } else if (q.includes("potol") || q.includes("পটল") || q.includes("pointed gourd")) {
+    cropName = "Pointed Gourd (Potol)";
+    category = "VEGETABLES";
+    variety = "Swarna Alaukik";
+    defaultPrice = 45.0;
+  } else if (q.includes("brinjal") || q.includes("begun") || q.includes("বেগুন") || q.includes("eggplant")) {
+    cropName = "Fresh Organic Brinjal";
+    category = "VEGETABLES";
+    variety = "Muktakeshi";
+    defaultPrice = 32.0;
+  } else if (q.includes("mango") || q.includes("aam") || q.includes("আম") || q.includes("himsagar")) {
+    cropName = "Himsagar Mango";
+    category = "FRUITS";
+    variety = "Malda GI Tagged";
+    defaultPrice = 65.0;
+  } else if (q.includes("onion") || q.includes("pyaj") || q.includes("পেঁয়াজ")) {
+    cropName = "Nasik Hybrid Onion";
+    category = "VEGETABLES";
+    variety = "Red Globe";
+    defaultPrice = 28.0;
+  } else if (q.includes("tomato") || q.includes("টমেটো")) {
+    cropName = "Vine Ripened Tomato";
+    category = "VEGETABLES";
+    variety = "Abhinav Hybrid";
+    defaultPrice = 25.0;
+  } else if (q.includes("potato") || q.includes("alu") || q.includes("আলু")) {
+    cropName = "Jyoti Potato";
+    category = "TUBERS";
+    variety = "Chandramukhi Hybrid";
+    defaultPrice = 20.0;
+  }
+
+  // Quantity detection
+  let qty = 500.0;
+  const qMatch = q.match(/(\d+(?:\.\d+)?)\s*(?:kg|kilo|কেজি|কিলোগ্রাম|কিগ্রা|quintal|কুইন্টাল)/i);
+  if (qMatch) {
+    qty = parseFloat(qMatch[1]);
+    if (q.includes("quintal") || q.includes("কুইন্টাল")) qty *= 100;
+  } else {
+    const numMatch = q.match(/\b(\d+(?:\.\d+)?)\b/);
+    if (numMatch) qty = parseFloat(numMatch[1]);
+  }
+
+  // Price detection (e.g. "at 20/-", "at 20", "20/-", "@20", "₹20", "20rs", "20/kg")
+  let price = defaultPrice;
+  const pMatch1 = q.match(/(?:at|@|for|rate|price|দাম|দরে|₹|rs\.?|inr|টাকা)\s*(\d+(?:\.\d+)?)\s*(?:\/-|\/|\/kg|per kg|kilo)?/i);
+  const pMatch2 = q.match(/(\d+(?:\.\d+)?)\s*(?:\/-|\/kg|per kg|rs\.?|inr|টাকা)/i);
+
+  if (pMatch1 && (!qMatch || parseFloat(pMatch1[1]) !== qty)) {
+    price = parseFloat(pMatch1[1]);
+  } else if (pMatch2 && (!qMatch || parseFloat(pMatch2[1]) !== qty)) {
+    price = parseFloat(pMatch2[1]);
+  }
+
+  return { cropName, category, variety, qty, price };
 }
 
 /* ==========================================================================

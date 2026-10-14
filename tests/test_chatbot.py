@@ -139,3 +139,39 @@ async def test_chatbot_automate_deploy_everything():
         assert data["automated_task"]["type"] == "deploy_everything"
         assert data["automated_task"]["deployed"] is True
         assert "ALL PIPELINES DEPLOYED" in data["automated_task"]["html_card"]
+
+
+@pytest.mark.asyncio
+async def test_chatbot_greeting_hi():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        res = await ac.post("/api/v1/chatbot/chat", json={
+            "input": "hi",
+            "role": "farmer",
+            "mode": "chat"
+        })
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert "hello" in data["output_text"].lower() or "taza" in data["output_text"].lower()
+        assert data["automated_task"] is None
+
+
+@pytest.mark.asyncio
+async def test_chatbot_list_500kg_at_20_dash():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        res = await ac.post("/api/v1/chatbot/chat", json={
+            "input": "list 500kg at 20/-",
+            "role": "farmer",
+            "mode": "chat"
+        })
+        assert res.status_code == 200
+        data = res.json()
+        assert data["success"] is True
+        assert data["automated_task"] is not None
+        task = data["automated_task"]
+        assert task["type"] == "create_listing"
+        assert task["details"]["quantity_kg"] == 500.0
+        assert task["details"]["price_per_kg"] == 20.0
+        assert "View In Live Marketplace" in task["html_card"]

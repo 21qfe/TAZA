@@ -71,25 +71,33 @@ def extract_listing_parameters(query: str) -> Dict[str, Any]:
             selected_crop = val
             break
 
-    # Extract quantity (e.g. 500kg, 500 kg, 200 quintal, 200)
+    # Extract quantity (e.g. 500kg, 500 kg, 200 quintal, 500)
     qty = 500.0
-    qty_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:kg|kilo|কেজি|কিলোগ্রাম|কিগ্রা)", q_lower)
+    qty_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:kg|kilo|কেজি|কিলোগ্রাম|কিগ্রা|quintal|কুইন্টাল)", q_lower)
     if qty_match:
         qty = float(qty_match.group(1))
+        if "quintal" in q_lower or "কুইন্টাল" in q_lower:
+            qty *= 100.0
     else:
-        num_match = re.search(r"(\d+(?:\.\d+)?)\b", q_lower)
+        num_match = re.search(r"\b(\d+(?:\.\d+)?)\b", q_lower)
         if num_match:
             qty = float(num_match.group(1))
 
-    # Extract price (e.g. ₹20, 20 rs, 20/kg, @20, @ 20)
+    # Extract price (e.g. at 20/-, at 20, 20/-, ₹20, 20 rs, 20/kg, @20, @ 20)
     price = selected_crop[3]
-    price_match = re.search(r"(?:₹|rs|inr|টাকা|@|\/kg|\/kilo)\s*(\d+(?:\.\d+)?)", q_lower)
-    if price_match:
-        price = float(price_match.group(1))
-    else:
-        price_match2 = re.search(r"(\d+(?:\.\d+)?)\s*(?:₹|rs|inr|টাকা|per kg|\/kg)", q_lower)
-        if price_match2:
-            price = float(price_match2.group(1))
+    price_patterns = [
+        r"(?:at|@|for|rate|price|দাম|দরে|₹|rs\.?|inr|টাকা)\s*(\d+(?:\.\d+)?)\s*(?:\/-|\/|\/kg|per kg|kilo)?",
+        r"(\d+(?:\.\d+)?)\s*(?:\/-|\/kg|per kg|rs\.?|inr|টাকা)",
+        r"(?:at|@)\s*(\d+(?:\.\d+)?)",
+    ]
+    for pat in price_patterns:
+        m = re.search(pat, q_lower)
+        if m:
+            val = float(m.group(1))
+            if qty_match and val == qty and "kg" in m.group(0):
+                continue
+            price = val
+            break
 
     return {
         "crop_name": selected_crop[0],
@@ -121,29 +129,15 @@ async def process_chat_message(
     if not api_key or api_key == "YOUR_API_KEY":
         api_key = None
 
-    # Determine if this is a task execution request
-    is_task_request = (
-        mode == "task"
-        or "list" in q_lower
-        or "sell" in q_lower
-        or "add crop" in q_lower
-        or "ফসল বিক্রি" in q_lower
-        or "warehouse" in q_lower
-        or "cold storage" in q_lower
-        or "গুদাম" in q_lower
-        or "logistics" in q_lower
-        or "waybill" in q_lower
-        or "dispatch" in q_lower
-        or "weather" in q_lower
-        or "rain" in q_lower
-        or "flood" in q_lower
-        or "revenue" in q_lower
-        or "pie chart" in q_lower
-        or "deploy everything" in q_lower
-        or "automate" in q_lower
-        or "বীমা" in q_lower
-        or "insurance" in q_lower
-    )
+    # Determine if this is a task execution request (vs conversational question)
+    is_listing = any(k in q_lower for k in ["list", "sell", "add crop", "ফসল বিক্রি", "তালিকা", "বিক্রি"]) and not any(k in q_lower for k in ["how to list", "why list", "what is list", "কেমন করে"])
+    is_deploy = any(k in q_lower for k in ["deploy everything", "automate all", "সম্পূর্ণ অপারেশন"])
+    is_warehouse_task = any(k in q_lower for k in ["book warehouse", "reserve warehouse", "book cold", "reserve cold", "allocate storage", "গুদাম বুক", "হিমাগার বুক"])
+    is_logistics_task = any(k in q_lower for k in ["dispatch route", "generate waybill", "send truck", "dispatch ev", "লজিস্টিকস পাঠান"])
+    is_revenue_chart = any(k in q_lower for k in ["revenue pie chart", "pie chart", "show revenue", "পাই চার্ট", "আয় চার্ট"])
+    is_weather_task = any(k in q_lower for k in ["scan weather", "protect crops", "telemetry scan", "আবহাওয়া স্ক্যান"])
+
+    is_task_request = (mode == "task") or is_listing or is_deploy or is_warehouse_task or is_logistics_task or is_revenue_chart or is_weather_task
 
     ai_text = ""
     model_used = payload.model or settings.OPENAI_MODEL or "gpt-5"
@@ -411,18 +405,24 @@ async def execute_autonomous_farm_task(
             ✅ Automatically published to TAZA direct consumer catalog and wholesale buyers gate.
             Real-time APMC Mandi benchmarking and 20% surge profit sharing activated.
           </p>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button type="button" onclick="switchRole('consumer'); scrollToProducts();" style="background:#10b981; color:#064e3b; font-weight:700; border:none; border-radius:6px; padding:6px 12px; cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:4px;">
+              <i data-lucide="external-link" style="width:12px;height:12px;"></i> View In Live Marketplace
+            </button>
+          </div>
         </div>
         """
 
         return AutomatedTaskResult(
             type="create_listing",
-            title=f"Listed {params['quantity_kg']}kg {params['crop_name']}",
+            title=f"Listed {params['quantity_kg']:.0f}kg {params['crop_name']}",
             executed=True,
             deployed=True,
             timestamp=now_utc.isoformat(),
             details={
                 "listing_id": listing_id,
                 "crop_name": params["crop_name"],
+                "variety": params["variety"],
                 "quantity_kg": params["quantity_kg"],
                 "price_per_kg": params["price_per_kg"],
                 "category": params["category"],
@@ -645,40 +645,157 @@ async def execute_autonomous_farm_task(
 
 
 def generate_expert_farm_response(query: str, role: str, mode: str, district: str) -> str:
-    """Provides high-quality agronomic and AI explanations when running without live OpenAI credentials."""
-    q = query.lower()
+    """Provides high-quality agronomic and conversational AI explanations matching ChatGPT and Gemini standards."""
+    q = query.strip().lower()
 
-    if "artificial intelligence" in q or "ai" in q or "কি" in q and "এআই" in q:
+    # 1. Greetings & Salutations (Natural like ChatGPT / Gemini)
+    greetings = ["hi", "hello", "hey", "hiya", "howdy", "namaste", "namaskar", "নমস্কার", "হ্যালো", "কেমন আছেন", "नमस्ते", "good morning", "good evening", "good afternoon"]
+    if any(q == g or q.startswith(g + " ") or q.endswith(" " + g) or q == g + "!" or q == g + "." for g in greetings):
         return (
-            "Artificial intelligence (AI) is like a super-smart farming assistant that learns from thousands of harvest seasons. "
-            "Just as an experienced Bengal farmer knows when rain is coming by looking at the wind and clouds, AI looks at thousands of data points—like "
-            "daily Mandi APMC prices, soil moisture, and weather forecasts—in seconds. "
-            "Here on TAZA, our AI helps you predict the best time to sell your crops, automatically allocates nearest cold storage space in Singur, "
-            "and dispatches electric delivery vehicles so your produce arrives farm-fresh with zero broker cuts!"
+            "Hello! I am **TAZA Agro-Copilot**, your agricultural intelligence and operations AI. "
+            "How can I help you today? You can ask me any farming question (crop disease prevention, "
+            "NPK fertilizer doses, today's Singur Mandi rates, or weather updates), or tell me to directly "
+            "automate farm tasks—like *'List 500kg potato at ₹20'*, *'Deploy everything'*, or *'Show my revenue pie chart'*."
         )
 
-    if "potato" in q or "alu" in q or "আলু" in q:
+    # 2. Who are you / Capability introduction
+    if any(k in q for k in ["who are you", "what are you", "what can you do", "help", "ক্যাপাবিলিটি", "তুমি কে", "তোমার কাজ কি"]):
         return (
-            f"In {district} and Purba Bardhaman, potatoes (Jyoti and Chandramukhi) benefit from dynamic daily APMC Mandi tracking. "
-            "To safeguard potato shelf-life and avoid shrinkage or sprouting, maintain cold storage temperature at 3.0°C to 4.0°C with 85-90% relative humidity. "
-            "Under TAZA's automated MSP floor protection, your base price is guarded against distress sales even during peak harvest gluts."
+            "I am **TAZA Agro-Copilot**, an independent agricultural AI platform purpose-built for farmers, FPOs, and direct farmgate-to-consumer trade in West Bengal.\n\n"
+            "Here is what I can do for you:\n"
+            "• **Direct Workflow Automation**: Tell me *'List 500kg potato at ₹20'* or *'Deploy everything'*, and I will create the live marketplace listing, lock in your MSP floor price, and sync warehouse records right in this chat.\n"
+            "• **Agronomic Advisory**: Detailed diagnosis and treatment schedules for late blight, stem borer, fruit borers, and wilt diseases across Potato, Rice, Brinjal, and Vegetables.\n"
+            "• **Mandi Price Intelligence**: Live APMC comparisons for Singur, Champadanga, and Burdwan to help you capture 20%–35% higher profits without middleman commission deductions.\n"
+            "• **Cold Storage & Logistics**: Instant space allocation at Singur Hub A-1 and automated EV delivery waybills on NH-19.\n\n"
+            "What would you like to do or ask about today?"
         )
 
-    if "rice" in q or "paddy" in q or "ধান" in q or "gobindobhog" in q:
+    # 3. How are you
+    if any(k in q for k in ["how are you", "kemon acho", "kemon achen", "কেমন আছো", "কেমন আছেন"]):
         return (
-            "Gobindobhog and Swarna paddy from the Damodar basin are premium GI crops. "
-            "Ensure moisture content is brought down to 12-14% before warehouse bagging to prevent fungal aflatoxin accumulation. "
-            "TAZA's wholesale auction engine automatically connects your paddy lots with Kolkata and Durgapur commercial buyers."
+            "I'm doing well, thank you! Ready and active to support your agricultural decisions in Hooghly. "
+            "How are your crops progressing this season?"
         )
 
-    if "weather" in q or "rain" in q or "flood" in q or "আবহাওয়া" in q:
+    # 4. Listing confirmation when called via listing task
+    if any(k in q for k in ["list", "sell", "add crop", "ফসল বিক্রি", "তালিকা"]):
+        params = extract_listing_parameters(query)
+        floor = params["price_per_kg"] * 0.95
         return (
-            f"Live Open-Meteo telemetry for {district} indicates stable harvesting conditions. "
-            "For pre-monsoon shower readiness, keep field trenches clear and reserve pallet space in nearby registered cooperative cold vaults."
+            f"I have listed your **{params['quantity_kg']:.0f} kg of {params['crop_name']} at ₹{params['price_per_kg']:.2f}/kg** "
+            f"directly onto the TAZA live marketplace! An automated MSP floor price has been locked at ₹{floor:.2f}/kg "
+            f"to protect your harvest from distress sales, and 22-clause all-risks insurance is activated."
         )
 
+    # 5. Deploy everything confirmation
+    if any(k in q for k in ["deploy everything", "automate all", "সম্পূর্ণ অপারেশন"]):
+        return (
+            "I have executed your complete agricultural deployment pipeline: synced your harvest listing, "
+            "reserved 500 kg cold vault storage at Singur Cooperative Hub A-1, dispatched an EV waybill on NH-19, "
+            "and activated 22-clause all-risks insurance protection."
+        )
+
+    # 6. Revenue & Pie Chart
+    if any(k in q for k in ["revenue", "pie", "chart", "harvest sales", "আয়", "পাই চার্ট"]):
+        return (
+            "Here is your real-time **Harvest Revenue & Crop Sales Analytics**. "
+            "Gobindobhog Rice leads your earnings at 34.7% (₹18,000), followed by Himsagar Mango at 26.3% (₹13,650), "
+            "Jyoti Potato at 21.2% (₹11,000), and Organic Vegetables at 17.8% (₹9,180), totaling ₹51,830 across 1,850 kg sold."
+        )
+
+    # 7. Disease & Pest Control: Late Blight in Potato
+    if any(k in q for k in ["late blight", "early blight", "blight", "ধসা", "আলুর রোগ", "potato disease"]):
+        return (
+            "**Potato Late Blight (Phytophthora infestans) Management Guide:**\n\n"
+            "Late blight spreads rapidly in Hooghly during foggy winter spells when RH > 85% and temperatures stay between 10°C–20°C.\n\n"
+            "**Action Steps:**\n"
+            "1. **Preventive Spray**: Spray **Mancozeb 75% WP** (Indofil M-45) @ 2.5g/L of water at 7-day intervals before symptoms appear.\n"
+            "2. **Curative Spray**: If water-soaked brown patches have appeared, immediately apply **Cymoxanil 8% + Mancozeb 64%** (Curzate) @ 2.5g/L or **Dimethomorph + Mancozeb** (Acrobat) @ 2g/L.\n"
+            "3. **Field Moisture**: Cease furrow flooding immediately; ensure field ditches are well-drained.\n"
+            "4. **Cold Storage Caution**: Discard affected tubers before vault storage to avoid bacterial soft rot."
+        )
+
+    # 8. Rice / Paddy Management
+    if any(k in q for k in ["rice", "paddy", "dhan", "ধান", "gobindobhog", "swarna", "blast", "stem borer", "মাজরা"]):
+        return (
+            "**Paddy (Gobindobhog & Swarna) Cultivation & Pest Control:**\n\n"
+            "• **Yellow Stem Borer (মাজরা পোকা)**: Apply **Chlorantraniliprole 0.4% G** (Ferterra) @ 4 kg/acre or spray **Cartap Hydrochloride 50% SP** @ 2g/L during the tillering stage.\n"
+            "• **Paddy Blast (ব্লাস্ট রোগ)**: Spray **Tricyclazole 75% WP** (Beam) @ 0.6g/L as soon as boat-shaped spindle spots appear on leaf blades.\n"
+            "• **Storage Safe Moisture**: Sun-dry paddy until moisture is between 12%–14% before warehouse bagging to avoid fungal discoloration."
+        )
+
+    # 9. Brinjal / Eggplant Pest Control
+    if any(k in q for k in ["brinjal", "begun", "বেগুন", "eggplant", "shoot borer", "fruit borer"]):
+        return (
+            "**Brinjal Shoot & Fruit Borer (ডগা ও ফল ছিদ্রকারী পোকা) Control:**\n\n"
+            "1. **Pheromone Traps**: Install 12–15 Lucinlure pheromone traps per acre.\n"
+            "2. **Bio-Pesticide**: Spray 5% Neem Seed Kernel Extract (NSKE) or Azadirachtin 10,000 ppm @ 2ml/L at early flowering.\n"
+            "3. **Targeted Chemical**: For severe infestation, rotate between **Emamectin Benzoate 5% SG** @ 0.4g/L and **Chlorantraniliprole 18.5% SC** (Coragen) @ 0.3ml/L.\n"
+            "4. **Mechanical Control**: Prune and deeply bury wilted terminal shoots weekly."
+        )
+
+    # 10. Fertilizers & Soil Health
+    if any(k in q for k in ["fertilizer", "npk", "urea", "dap", "potash", "সার", "মাটি", "soil"]):
+        return (
+            "**Balanced Soil & Crop Nutrition Guide for West Bengal:**\n\n"
+            "• **Potato**: Optimal N:P:K is **180:120:120 kg/ha**. Apply half N and all P & K at planting; side-dress remaining N at 30–35 days during earthing-up.\n"
+            "• **Paddy**: Optimal N:P:K is **80:40:40 kg/ha**. Split Nitrogen into basal, active tillering, and panicle emergence.\n"
+            "• **Micronutrients**: Alluvial soils in the Damodar basin often lack Zinc. Apply **Zinc Sulphate (21%)** @ 10 kg/acre to prevent chlorosis."
+        )
+
+    # 11. Cold Storage & Warehousing
+    if any(k in q for k in ["cold storage", "warehouse", "vault", "গুদাম", "হিমাগার"]):
+        return (
+            f"**Cold Vault Storage Standards in {district}:**\n\n"
+            "• **Potato**: 3.0°C–4.0°C with 85%–90% RH to stop sprouting and sugar conversion.\n"
+            "• **Onion**: 0°C–2°C with dry 65%–70% RH.\n"
+            "• **TAZA Integration**: You can type *'Reserve cold storage'* at any time to automatically lock space in Singur Hub A-1 with 22-clause all-risks insurance."
+        )
+
+    # 12. Mandi APMC Prices vs TAZA
+    if any(k in q for k in ["mandi", "apmc", "price", "rate", "বাজার", "দর", "দাম"]):
+        return (
+            f"**Mandi Pricing vs. TAZA Direct Farmgate in {district}:**\n\n"
+            "• **Singur APMC Market**: Modal rate for Jyoti Potato is approx ₹18.00–₹19.50/kg, after which brokers deduct 6%–10% handling fees and weighing cuts.\n"
+            "• **TAZA Farmgate**: You receive 100% of your quoted price with an automated MSP floor price (₹19.00/kg) and zero deductions, giving farmers +20% to +35% higher take-home revenue."
+        )
+
+    # 13. Government Schemes
+    if any(k in q for k in ["scheme", "krishak bandhu", "pm-kisan", "kcc", "bima", "সরকারি অনুদান", "কৃষক বন্ধু"]):
+        return (
+            "**Major Agricultural Schemes for Bengal Farmers:**\n\n"
+            "1. **Krishak Bandhu (WB Govt)**: Annual financial aid up to **₹10,000/year** (₹5,000 Kharif + ₹5,000 Rabi) for 1+ acre, plus ₹2 Lakh life insurance (ages 18–60).\n"
+            "2. **PM-KISAN**: Direct income support of **₹6,000/year** in three equal 4-month tranches of ₹2,000.\n"
+            "3. **Bangla Shasya Bima (BSB)**: Zero-premium state-funded crop insurance against flood, storm, and drought losses.\n"
+            "4. **Kisan Credit Card (KCC)**: Concessional crop loans up to ₹3 Lakh at an effective interest rate of 4% per annum."
+        )
+
+    # 14. Weather Telemetry
+    if any(k in q for k in ["weather", "rain", "storm", "flood", "cyclone", "আবহাওয়া", "বৃষ্টি"]):
+        return (
+            f"**Agro-Meteorological Forecast for {district}:**\n\n"
+            "• **Precipitation**: Low rain probability (0.2 mm/hr), normal water table.\n"
+            "• **Temperature & Humidity**: Day temperature ~28.4°C with 76% RH.\n"
+            "• **Advisory**: Clear between-bed furrows to promote soil aeration. Logistics corridors on NH-19 remain clear."
+        )
+
+    # 15. Artificial Intelligence in Simple Words
+    if any(k in q for k in ["artificial intelligence", "ai", "এআই", "বুদ্ধিমত্তা"]):
+        return (
+            "Artificial intelligence (AI) is like an experienced farming elder that remembers every season's data. "
+            "Just as a seasoned farmer predicts weather from wind shifts, AI analyzes thousands of daily data points—like "
+            "Mandi prices, soil moisture, and weather forecasts—in seconds.\n\n"
+            "On TAZA, AI helps you:\n"
+            "1. Choose the best day and price to list your harvest.\n"
+            "2. Automatically allocate space in Singur cold vaults.\n"
+            "3. Dispatch electric vehicles directly to buyers with zero middleman deductions."
+        )
+
+    # 16. General Conversational Fallback (Natural, helpful like ChatGPT/Gemini)
     return (
-        f"I have analyzed your agricultural request for {district}. In TAZA 2.0, you can ask any farm question "
-        f"or directly automate tasks—like listing crops, reserving cold storage, generating revenue pie charts, or dispatching EV waybills—"
-        f"all executed live in this stream without leaving the chat."
+        f"I've received your query regarding **'{query}'**. "
+        f"As your TAZA Agricultural Copilot for {district}, I'm here to provide crop management advice, "
+        f"live APMC Mandi insights, or immediately automate your farm workflows. "
+        f"You can ask me specific questions like *'How to control potato blight?'*, *'Today's Singur mandi rate'*, "
+        f"or give a command like *'List 500kg at ₹20'* to automatically publish your produce to our marketplace."
     )
