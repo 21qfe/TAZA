@@ -100,6 +100,15 @@ class InsuranceService:
 
         if not claims:
             claims = self.get_sample_claims(crop_name)
+            for c in claims:
+                c["crop_name"] = c.get("cropName", "")
+                c["claim_amount_rs"] = float(c.get("claimAmountRs", 0.0))
+                c["calculated_refund_rs"] = float(c.get("calculatedRefundRs", 0.0))
+                c["approval_status"] = c.get("approvalStatus", "Approved & Settled")
+                c["claim_id"] = c.get("claimId", "")
+                c["insured_stock_kg"] = float(c.get("insuredStockKg", 0.0))
+                c["incident_risk_factor"] = c.get("incidentRiskFactor", "")
+                c["warehouse_location"] = c.get("warehouseLocation", "")
 
         self._claims_cache[cache_key] = (now, claims)
         return claims

@@ -121,12 +121,17 @@
         <li class="subnav-logistics-item"><a href="javascript:void(0)" id="subnavLogistics" onclick="openLogisticsModal()"><i data-lucide="truck" class="inline-icon"></i> <span id="subnavLogisticsText">AI Smart Logistics</span></a></li>
         <li class="subnav-mandi-item"><a href="javascript:void(0)" id="subnavMandi" onclick="openMandiStatsModal()"><span id="subnavMandiText">Mandi Arbitrage Engine</span></a></li>
         <li class="subnav-consumer-item"><a href="javascript:void(0)" onclick="openAuthModal('farmer')" id="subnavFarmerHubLink" style="color: #166534; font-weight: 700; background: rgba(22, 101, 52, 0.08); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(22, 101, 52, 0.2); display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="tractor" class="inline-icon"></i> <span id="subnavFarmerHubLinkText">Farmer &amp; FPO Portal</span></a></li>
+        <li class="subnav-farmer-item" style="display: none;"><a href="javascript:void(0)" id="subnavFarmerAnalytics" onclick="openFarmerHarvestAnalytics()"><i data-lucide="pie-chart" class="inline-icon" style="color: #4ade80;"></i> <span id="subnavFarmerAnalyticsText">Harvest Revenue &amp; Pie Charts (আয় চার্ট)</span></a></li>
         <li class="subnav-farmer-item" style="display: none;"><a href="javascript:void(0)" id="subnavFarmerDocs" onclick="openFarmerProfileModal('documents')"><i data-lucide="folder-check" class="inline-icon"></i> <span id="subnavFarmerDocsText">Farmer Documents Vault</span></a></li>
         <li class="subnav-farmer-item" style="display: none;"><a href="javascript:void(0)" id="subnavFarmerInsurance" onclick="openFarmerInsuranceModal()"><i data-lucide="shield-check" class="inline-icon"></i> <span id="subnavFarmerInsuranceText">Warehouse All Risks Cover</span></a></li>
       </ul>
       <div class="sub-nav-right">
         <span class="mandis-avoided subnav-consumer-item" id="retailSavingsCounter"><i data-lucide="trending-down"></i> Retail Markup Saved Today: ₹1,24,900</span>
-        <span class="farmer-live-status subnav-farmer-item" id="farmerSubnavBadge" style="display: none; color: #86efac; font-weight: 600; font-size: 12px;"><i data-lucide="check-circle-2" class="inline-icon"></i> Producer Operations Active</span>
+        <span class="farmer-live-status subnav-farmer-item" id="farmerSubnavBadge" style="display: none; color: #86efac; font-weight: 600; font-size: 12px;"><i data-lucide="check-circle-2" class="inline-icon"></i> TAZA 2.0 Active</span>
+        <button type="button" class="btn-farmer-drawer-trigger subnav-farmer-item" id="farmerSubnavDrawerBtn" onclick="openFarmerDrawer()" title="Open Inherent Features Deck (তিনটি উল্লম্ব বার)" style="display: none;">
+          <span class="vbars-icon"><span></span><span></span><span></span></span>
+          <span id="farmerDrawerBtnLabel">Inherent Features</span>
+        </button>
       </div>
     </div>
   </nav>
@@ -289,32 +294,173 @@
       </section>
     </section>
 
-    <!-- ================= VIEW 2: FARMER PORTAL & OPERATION SUITE ================= -->
+    <!-- ================= VIEW 2: FARMER PORTAL & OPERATION SUITE (TAZA 2.0 LLM INTERFACE) ================= -->
     <section id="farmerView" class="view-section">
-      <!-- Farmer Quick Dashboard Header -->
-      <div class="farmer-dashboard-header">
-        <div>
-          <h2 id="farmerHeaderTitle">Farmer &amp; FPO Producer Operations Hub</h2>
-          <p id="farmerWelcomeSub">Welcome back, <strong id="farmerNameDisplay">Ananda Mondal (Singur Agro FPO)</strong> • Farm Gate: <span id="farmerDistrictDisplay">Hooghly Central Zone</span></p>
+      <!-- 1. TAZA 2.0 LLM MODEL CANVAS (GREEN PALETTE INTERFACE) -->
+      <div class="taza2-llm-screen">
+        <!-- Top Bar with Model Identity & Three Vertical Bars Trigger -->
+        <header class="taza2-top-header">
+          <div class="taza2-brand-box">
+            <div class="taza2-spark-icon">
+              <i data-lucide="sparkles"></i>
+            </div>
+            <div>
+              <div class="taza2-title-row">
+                <span class="taza2-model-title">TAZA 2.0</span>
+                <span class="taza2-status-pill"><span class="taza2-pulse-dot"></span> Agri Intelligence Online</span>
+              </div>
+              <p class="taza2-sub-title" id="farmerWelcomeSub">
+                <strong id="farmerNameDisplay">Ananda Mondal (Singur Agro FPO)</strong> • Farm Gate: <span id="farmerDistrictDisplay">Hooghly Central Zone</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="taza2-header-actions">
+            <button type="button" class="btn-taza2-header-pill highlight" onclick="openFarmerHarvestAnalytics()">
+              <i data-lucide="pie-chart"></i> <span id="btnHarvestPieText">Harvest Revenue (Pie Chart)</span>
+            </button>
+            <button type="button" class="btn-taza2-header-pill" id="farmerSwitchToConsumerBtn" onclick="switchRole('consumer')">
+              <i data-lucide="refresh-cw"></i> <span>Buyer Marketplace</span>
+            </button>
+            <!-- THREE VERTICAL BARS IN TOP RIGHT CORNER -->
+            <button type="button" class="btn-taza2-vbars" id="farmerDrawerTriggerHero" onclick="openFarmerDrawer()" title="TAZA 2.0 Inherent Features (তিনটি উল্লম্ব বার)">
+              <div class="vbars-container">
+                <span class="vbar"></span>
+                <span class="vbar"></span>
+                <span class="vbar"></span>
+              </div>
+              <span class="vbars-label">Features</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Central Stage / Hero (matching reference image) -->
+        <div class="taza2-hero-stage" id="taza2HeroStage">
+          <h1 class="taza2-hero-title" id="taza2HeroTitle">Look what you can do with TAZA 2.0</h1>
+          
+          <div class="taza2-lets-go-wrapper">
+            <button type="button" class="taza2-lets-go-pill" onclick="focusTaza2Input()">Let's go</button>
+          </div>
+
+          <!-- Centered Mode Selector Pills: Chat | Task (from screenshot) -->
+          <div class="taza2-mode-selector-wrap">
+            <div class="taza2-mode-selector">
+              <button type="button" class="taza2-mode-chip active" id="taza2ModeChipChat" onclick="switchTaza2Mode('chat')">Chat</button>
+              <button type="button" class="taza2-mode-chip" id="taza2ModeChipTask" onclick="switchTaza2Mode('task')">Task</button>
+            </div>
+          </div>
+
+          <!-- Inherent Features Quick Capability Chips -->
+          <div class="taza2-capability-chips">
+            <button type="button" class="taza2-cap-chip highlight-pie" onclick="openFarmerHarvestAnalytics()">
+              <i data-lucide="pie-chart"></i> <span>📊 Revenue &amp; Harvest Pie Chart (নতুন আয় চার্ট)</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('listing')">
+              <i data-lucide="package-plus"></i> <span>🌾 List Harvest for Sale (Mandi Peg &amp; 20% Surge)</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('warehouses')">
+              <i data-lucide="warehouse"></i> <span>🏬 Cold Storage Matrix &amp; 40km Distance Radar</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="openLogisticsModal()">
+              <i data-lucide="truck"></i> <span>🚚 Smart Logistics Dispatch &amp; Flood Detour</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('weather')">
+              <i data-lucide="cloud-lightning"></i> <span>🌦️ Live Disaster &amp; Meteorological Weather Scan</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="openFarmerAgreementModal()">
+              <i data-lucide="file-check"></i> <span>📜 Produce Agreement &amp; Documents Vault</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="openFarmerInsuranceModal()">
+              <i data-lucide="shield-check"></i> <span>🛡️ 22-Clause All Risks Storage Insurance</span>
+            </button>
+            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('orders')">
+              <i data-lucide="clipboard-list"></i> <span>📋 Incoming Orders &amp; Direct 1:1 Contact</span>
+            </button>
+          </div>
         </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <button class="btn-farmer-docs" id="farmerDocsBtn" onclick="openFarmerProfileModal('documents')">
-            <i data-lucide="folder-check"></i> <span id="farmerDocsBtnText">My Documents &amp; Agreement (নথিপত্র)</span>
-          </button>
-          <button class="btn-hero-primary" id="farmerCreateListingBtn" onclick="document.getElementById('cropName').focus()">
-            <i data-lucide="plus"></i> <span id="farmerCreateListingBtnText">Create New Harvest Listing</span>
-          </button>
-          <button class="btn-farmer-docs" id="farmerLogisticsBtn" onclick="openLogisticsModal()" style="background: #1e293b; color: #fff; border-color: #334155;">
-            <i data-lucide="truck"></i> <span id="farmerLogisticsBtnText">AI Dispatch Logistics (লজিস্টিকস)</span>
-          </button>
-          <button class="btn-farmer-docs" id="farmerSwitchToConsumerBtn" onclick="switchRole('consumer')" style="background: #f8fafc; color: #166534; border-color: #86efac;">
-            <i data-lucide="refresh-cw"></i> <span>Buyer Marketplace (ক্রেতা পোর্টাল)</span>
-          </button>
+
+        <!-- Conversation Stream Container (Dynamically rendered chat bubbles & inlined widgets) -->
+        <div class="taza2-chat-stream" id="taza2ChatStream">
+          <!-- Populated by app.js -->
+        </div>
+
+        <!-- Persistent Floating Prompt Bar (Bottom, matching reference image) -->
+        <div class="taza2-prompt-bar-container">
+          <div class="taza2-prompt-bar">
+            <!-- Plus Button with Dropdown Menu -->
+            <div class="taza2-plus-menu-container">
+              <button type="button" class="taza2-plus-btn" id="taza2PlusBtn" onclick="toggleTaza2PlusMenu(event)" title="Add / Launch Feature (বৈশিষ্ট্য সংযুক্ত করুন)">
+                <i data-lucide="plus"></i>
+              </button>
+              <div class="taza2-plus-dropdown" id="taza2PlusDropdown">
+                <div class="taza2-dropdown-header">Inherent Agri Tools</div>
+                <button type="button" onclick="openFarmerHarvestAnalytics(); closeTaza2PlusMenu();">
+                  <i data-lucide="pie-chart"></i> <span>View Harvest Revenue &amp; Pie Chart</span>
+                </button>
+                <button type="button" onclick="popInherentFeature('listing'); closeTaza2PlusMenu();">
+                  <i data-lucide="package-plus"></i> <span>Create New Harvest Listing</span>
+                </button>
+                <button type="button" onclick="popInherentFeature('warehouses'); closeTaza2PlusMenu();">
+                  <i data-lucide="radar"></i> <span>Scan Nearby Cold Vaults (40km Radar)</span>
+                </button>
+                <button type="button" onclick="openLogisticsModal(); closeTaza2PlusMenu();">
+                  <i data-lucide="truck"></i> <span>Generate AI Waybill Route</span>
+                </button>
+                <button type="button" onclick="popInherentFeature('weather'); closeTaza2PlusMenu();">
+                  <i data-lucide="cloud-rain"></i> <span>Check Live Weather Telemetry</span>
+                </button>
+                <button type="button" onclick="openFarmerAgreementModal(); closeTaza2PlusMenu();">
+                  <i data-lucide="file-text"></i> <span>Open Legal Produce Agreement</span>
+                </button>
+                <button type="button" onclick="openFarmerInsuranceModal(); closeTaza2PlusMenu();">
+                  <i data-lucide="shield-check"></i> <span>View 22-Clause All Risks Insurance</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Prompt Input Field -->
+            <div class="taza2-input-box">
+              <input type="text" id="taza2PromptInput" placeholder="Ask TAZA 2.0 or call any farmer tool..." autocomplete="off" onkeydown="handleTaza2Keydown(event)" />
+            </div>
+
+            <!-- Microphone Button -->
+            <button type="button" class="taza2-action-btn mic" id="taza2MicBtn" onclick="triggerTaza2VoiceCommand()" title="Voice query / কণ্ঠ নির্দেশ">
+              <i data-lucide="mic"></i>
+            </button>
+
+            <!-- Send Button -->
+            <button type="button" class="taza2-action-btn send" id="taza2SendBtn" onclick="sendTaza2Message()" title="Send query to TAZA 2.0">
+              <i data-lucide="arrow-up"></i>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Farmer Documents & Produce Agreement Banner -->
-      <div class="farmer-docs-banner" id="farmerDocsBanner">
+      <!-- 2. INHERENT FEATURES MODULAR DOCK (POPS UP WHEN CALLED OR VIA 3 VERTICAL BARS) -->
+      <div id="taza2InherentFeaturesWrapper" class="taza2-features-dock">
+        <!-- Dock Header Controls -->
+        <div class="dock-control-bar" id="dockControlBar" style="display: none;">
+          <div class="dock-title-left">
+            <span class="dock-status-pill">Active Tool View</span>
+            <h3 id="dockCurrentToolTitle">Farmer Operations Module</h3>
+          </div>
+          <div class="dock-actions-right">
+            <button type="button" class="btn-dock-minimize" onclick="minimizeInherentDock()" title="Return to TAZA 2.0 Chat">
+              <i data-lucide="arrow-left"></i> <span>Back to TAZA 2.0 Chat</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Compatibility Header (Hidden by default, holds legacy IDs) -->
+        <div class="farmer-dashboard-header" id="legacyFarmerDashboardHeader" style="display: none;">
+          <h2 id="farmerHeaderTitle">Farmer Operations Suite</h2>
+          <button id="farmerDocsBtn" onclick="openFarmerProfileModal('documents')"></button>
+          <button id="farmerCreateListingBtn" onclick="popInherentFeature('listing')"></button>
+          <button id="farmerLogisticsBtn" onclick="openLogisticsModal()"></button>
+        </div>
+
+        <!-- Farmer Documents & Produce Agreement Banner -->
+        <div class="farmer-docs-banner inherent-feature-panel" id="farmerDocsBanner">
         <div class="farmer-docs-banner-left">
           <div class="docs-icon-badge">
             <i data-lucide="file-check"></i>
@@ -930,6 +1076,8 @@
             <!-- Injected via JS -->
           </div>
         </div>
+      </div>
+      <!-- End of taza2InherentFeaturesWrapper -->
       </div>
     </section>
   </main>
@@ -2039,6 +2187,358 @@
       <div style="padding:14px 22px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:flex-end; gap:10px;">
         <button type="button" onclick="closePricingStrategyInfoModal()" style="padding:9px 20px; border-radius:8px; border:1.5px solid #cbd5e1; background:#fff; color:#475569; font-weight:700; font-size:0.83rem; cursor:pointer;">Close</button>
         <button type="button" onclick="closePricingStrategyInfoModal(); setListingPricingStrategy('DYNAMIC_MANDI_PEG');" style="padding:9px 20px; border-radius:8px; border:none; background:#16a34a; color:#fff; font-weight:700; font-size:0.83rem; cursor:pointer;">✅ Use Dynamic Pricing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 14. THREE VERTICAL BARS SLIDE-OUT INHERENT FEATURES DRAWER ================= -->
+  <div id="farmerDrawerBackdrop" class="farmer-drawer-backdrop" onclick="closeFarmerDrawer(event)">
+    <aside id="farmerFeaturesDrawer" class="farmer-features-drawer">
+      <div class="drawer-top-banner">
+        <div class="drawer-brand-header">
+          <div class="vbars-badge-icon">
+            <span></span><span></span><span></span>
+          </div>
+          <div>
+            <h3>TAZA 2.0 Inherent Features</h3>
+            <p>Agri-Intelligence Model Core • Producer Suite</p>
+          </div>
+        </div>
+        <button type="button" class="drawer-close-btn" onclick="closeFarmerDrawer()" aria-label="Close drawer">✕</button>
+      </div>
+
+      <div class="drawer-scroll-content">
+        <!-- Producer ID Ribbon -->
+        <div class="drawer-farmer-profile-strip">
+          <div class="profile-avatar"><i data-lucide="sprout"></i></div>
+          <div class="profile-meta">
+            <strong>Ananda Mondal (Singur Agro FPO)</strong>
+            <span>Hooghly Central Agricultural Zone • MSP Floor Active</span>
+          </div>
+        </div>
+
+        <!-- Section 1: Financial & Harvest Analytics -->
+        <div class="drawer-category-group">
+          <span class="category-heading">FINANCIAL &amp; HARVEST ANALYTICS</span>
+          <button type="button" class="drawer-feature-item highlight" onclick="openFarmerHarvestAnalytics(); closeFarmerDrawer();">
+            <div class="feature-icon green"><i data-lucide="pie-chart"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Revenue &amp; Harvest Analytics <span class="badge-new">NEW PIE CHART</span></div>
+              <div class="feature-desc">Interactive pie chart of crops sold, revenue breakdown &amp; harvest volume</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+
+          <button type="button" class="drawer-feature-item" onclick="openMandiStatsModal(); closeFarmerDrawer();">
+            <div class="feature-icon emerald"><i data-lucide="trending-up"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Mandi Benchmark &amp; Arbitrage</div>
+              <div class="feature-desc">Official APMC prices, 20% surge profit simulator &amp; price trends</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+        </div>
+
+        <!-- Section 2: Harvest & Produce Management -->
+        <div class="drawer-category-group">
+          <span class="category-heading">HARVEST LISTINGS &amp; ORDERS</span>
+          <button type="button" class="drawer-feature-item" onclick="popInherentFeature('listing'); closeFarmerDrawer();">
+            <div class="feature-icon green"><i data-lucide="package-plus"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">List Harvest for Sale</div>
+              <div class="feature-desc">Publish crop with dynamic mandi peg, 20% surge bonus &amp; freshness tally</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+
+          <button type="button" class="drawer-feature-item" onclick="popInherentFeature('orders'); closeFarmerDrawer();">
+            <div class="feature-icon blue"><i data-lucide="clipboard-list"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Direct Incoming Orders</div>
+              <div class="feature-desc">Consumer purchases, escrow verification &amp; 1:1 masked contact relay</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+        </div>
+
+        <!-- Section 3: Cold Chain & Logistics -->
+        <div class="drawer-category-group">
+          <span class="category-heading">COLD STORAGE &amp; LOGISTICS</span>
+          <button type="button" class="drawer-feature-item" onclick="popInherentFeature('warehouses'); closeFarmerDrawer();">
+            <div class="feature-icon cyan"><i data-lucide="warehouse"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Cold Storage &amp; Vault Matrix</div>
+              <div class="feature-desc">Nearby storage hubs, Space Fit Calculator &amp; AI 40km Distance Radar</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+
+          <button type="button" class="drawer-feature-item" onclick="openLogisticsModal(); closeFarmerDrawer();">
+            <div class="feature-icon indigo"><i data-lucide="truck"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">AI Dispatch Logistics</div>
+              <div class="feature-desc">Autonomous flood bypass, EV green corridors &amp; multi-farm batch TSP</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+
+          <button type="button" class="drawer-feature-item" onclick="popInherentFeature('weather'); closeFarmerDrawer();">
+            <div class="feature-icon amber"><i data-lucide="cloud-lightning"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Live Disaster &amp; Weather Advisory</div>
+              <div class="feature-desc">Real-time Open-Meteo agro-meteorological sync &amp; flood alerts</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+        </div>
+
+        <!-- Section 4: Legal & Policy Guarantees -->
+        <div class="drawer-category-group">
+          <span class="category-heading">STATUTORY PROTECTION &amp; VAULT</span>
+          <button type="button" class="drawer-feature-item" onclick="openFarmerAgreementModal(); closeFarmerDrawer();">
+            <div class="feature-icon purple"><i data-lucide="file-check"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Farmer Produce Agreement</div>
+              <div class="feature-desc">Signed contract, MSP clause 1, 30-day settlement guarantee &amp; PDF</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+
+          <button type="button" class="drawer-feature-item" onclick="openFarmerInsuranceModal(); closeFarmerDrawer();">
+            <div class="feature-icon rose"><i data-lucide="shield-check"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Warehouse All Risks Insurance</div>
+              <div class="feature-desc">22-clause storage cover, spoilage protection &amp; live MongoDB claims</div>
+            </div>
+            <i data-lucide="chevron-right" class="feature-arrow"></i>
+          </button>
+        </div>
+
+        <!-- Section 5: Switch Portal -->
+        <div class="drawer-category-group">
+          <button type="button" class="drawer-feature-item switch-role-btn" onclick="switchRole('consumer'); closeFarmerDrawer();">
+            <div class="feature-icon dark"><i data-lucide="shopping-basket"></i></div>
+            <div class="feature-text">
+              <div class="feature-title">Switch to Buyer / Consumer Portal</div>
+              <div class="feature-desc">Browse live farm-gate produce as a household or commercial buyer</div>
+            </div>
+            <i data-lucide="arrow-right" class="feature-arrow"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================= 15. NEW FARMER LISTING & HARVEST REVENUE MODAL (PIE CHARTS) ================= -->
+  <div id="farmerHarvestAnalyticsModal" class="modal-backdrop" onclick="handleBackdropClick(event, 'farmerHarvestAnalyticsModal')">
+    <div class="modal-dialog harvest-analytics-dialog">
+      <!-- Modal Header -->
+      <div class="analytics-modal-header">
+        <div class="header-left-title">
+          <div class="analytics-icon-badge">
+            <i data-lucide="pie-chart"></i>
+          </div>
+          <div>
+            <div class="title-with-pill">
+              <h2>Farmer Harvest &amp; Crop Revenue Performance</h2>
+              <span class="analytics-model-pill">TAZA 2.0 Agri Analytics</span>
+            </div>
+            <p id="analyticsSubheadText">Realized revenue from crops sold, harvest volume distribution &amp; live produce inventory</p>
+          </div>
+        </div>
+        <div class="header-right-actions">
+          <button type="button" class="btn-analytics-refresh" onclick="refreshHarvestAnalytics()" title="Refresh live MongoDB sync">
+            <i data-lucide="refresh-cw"></i> <span>Live Sync</span>
+          </button>
+          <button type="button" class="btn-analytics-print" onclick="window.print()" title="Print / Export Report">
+            <i data-lucide="printer"></i> <span>Export</span>
+          </button>
+          <button type="button" class="modal-close" onclick="closeFarmerHarvestAnalytics()">✕</button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="analytics-modal-body">
+        <!-- KPI Summary Cards -->
+        <div class="analytics-kpi-grid">
+          <div class="kpi-card highlight-green">
+            <div class="kpi-icon"><i data-lucide="wallet"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Revenue from Crops Sold</span>
+              <strong class="kpi-value" id="kpiGrossRevenue">₹51,830.00</strong>
+              <small class="kpi-note"><i data-lucide="check-circle-2"></i> Zero middlemen commission cut</small>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon"><i data-lucide="sprout"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Total Harvest Volume</span>
+              <strong class="kpi-value" id="kpiTotalHarvest">1,850.0 kg</strong>
+              <small class="kpi-note" id="kpiTotalQuintals">18.50 Quintals harvested</small>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon"><i data-lucide="shopping-bag"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Harvest Sold &amp; Delivered</span>
+              <strong class="kpi-value" id="kpiTotalSold">1,265.0 kg</strong>
+              <small class="kpi-note status-good" id="kpiSellThroughRate">68.4% Sell-Through Rate</small>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-icon"><i data-lucide="warehouse"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Stored Stock Value</span>
+              <strong class="kpi-value" id="kpiStoredValue">₹14,200.00</strong>
+              <small class="kpi-note" id="kpiStoredWeight">585.0 kg in cold storage</small>
+            </div>
+          </div>
+
+          <div class="kpi-card highlight-emerald">
+            <div class="kpi-icon"><i data-lucide="trending-up"></i></div>
+            <div class="kpi-content">
+              <span class="kpi-label">Fair-Trade Advantage</span>
+              <strong class="kpi-value" id="kpiFairTradeGain">+35% Extra</strong>
+              <small class="kpi-note">vs APMC Mandi middlemen prices</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- DUAL PIE CHARTS ROW -->
+        <div class="analytics-charts-row">
+          <!-- PIE CHART 1: REVENUE FROM CROPS SOLD -->
+          <div class="analytics-chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <i data-lucide="pie-chart" class="chart-icon"></i>
+                <div>
+                  <h4>Revenue Breakdown from Crops Sold (বিক্রি ফসল আয়)</h4>
+                  <p>Share of total realized earnings (₹) by individual crop variety</p>
+                </div>
+              </div>
+              <span class="chart-metric-badge" id="chart1TotalBadge">Total: ₹51,830</span>
+            </div>
+
+            <div class="pie-chart-container">
+              <!-- SVG Pie Chart -->
+              <div class="pie-svg-wrapper">
+                <svg id="pieRevenueSvg" viewBox="0 0 320 320" class="pie-chart-svg">
+                  <!-- Injected via renderRevenuePieChart -->
+                </svg>
+                <div class="pie-center-hole">
+                  <span class="center-sub">Gross Revenue</span>
+                  <strong class="center-main" id="pieCenterRevenue">₹51.8k</strong>
+                  <span class="center-tag">Direct Payout</span>
+                </div>
+              </div>
+
+              <!-- Legend and Breakdown List -->
+              <div class="pie-legend-container" id="pieRevenueLegend">
+                <!-- Injected via renderRevenuePieChart -->
+              </div>
+            </div>
+          </div>
+
+          <!-- PIE CHART 2: TOTAL HARVEST VOLUME DISTRIBUTION -->
+          <div class="analytics-chart-card">
+            <div class="chart-header">
+              <div class="chart-title-group">
+                <i data-lucide="circle-dot" class="chart-icon"></i>
+                <div>
+                  <h4>Total Harvest Allocation (মোট ফসল বণ্টন)</h4>
+                  <p>Distribution of harvested produce: Sold vs Cold Vault vs In-Transit</p>
+                </div>
+              </div>
+              <span class="chart-metric-badge" id="chart2TotalBadge">Harvest: 1,850 kg</span>
+            </div>
+
+            <div class="pie-chart-container">
+              <!-- SVG Donut Chart -->
+              <div class="pie-svg-wrapper">
+                <svg id="pieVolumeSvg" viewBox="0 0 320 320" class="pie-chart-svg">
+                  <!-- Injected via renderVolumePieChart -->
+                </svg>
+                <div class="pie-center-hole">
+                  <span class="center-sub">Total Harvest</span>
+                  <strong class="center-main" id="pieCenterVolume">1,850 kg</strong>
+                  <span class="center-tag">100% Tracked</span>
+                </div>
+              </div>
+
+              <!-- Legend and Allocation List -->
+              <div class="pie-legend-container" id="pieVolumeLegend">
+                <!-- Injected via renderVolumePieChart -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW FARMER CROP LISTINGS PERFORMANCE TABLE -->
+        <div class="analytics-listings-section">
+          <div class="listings-section-header">
+            <div class="listings-title-box">
+              <i data-lucide="layers"></i>
+              <div>
+                <h3>Farmer Crop Listings &amp; Inventory Ledger (ফসলের তালিকা ও স্থিতি)</h3>
+                <p>Complete harvest batches, warehouse locations, sales realization &amp; available stock</p>
+              </div>
+            </div>
+
+            <div class="listings-controls">
+              <!-- Category Filter Pills -->
+              <div class="listings-category-pills" id="analyticsCategoryFilterPills">
+                <button type="button" class="cat-pill active" onclick="filterAnalyticsListings('ALL')">All Crops</button>
+                <button type="button" class="cat-pill" onclick="filterAnalyticsListings('TUBERS')">Tubers</button>
+                <button type="button" class="cat-pill" onclick="filterAnalyticsListings('FRUITS')">Fruits</button>
+                <button type="button" class="cat-pill" onclick="filterAnalyticsListings('GRAINS_PADDY')">Grains &amp; Rice</button>
+                <button type="button" class="cat-pill" onclick="filterAnalyticsListings('VEGETABLES')">Vegetables</button>
+                <button type="button" class="cat-pill" onclick="filterAnalyticsListings('SPICES')">Spices</button>
+              </div>
+
+              <button type="button" class="btn-create-harvest-listing" onclick="closeFarmerHarvestAnalytics(); popInherentFeature('listing');">
+                <i data-lucide="plus"></i> <span>List New Harvest</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Listings Table -->
+          <div class="listings-table-responsive">
+            <table class="farmer-analytics-table">
+              <thead>
+                <tr>
+                  <th>Crop &amp; Variety</th>
+                  <th>Category</th>
+                  <th>Harvest Date</th>
+                  <th>Total Harvest</th>
+                  <th>Sold (Delivered)</th>
+                  <th>In-Stock (Available)</th>
+                  <th>Farm Price</th>
+                  <th>Revenue Earned</th>
+                  <th>Cold Storage Hub</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="farmerAnalyticsListingsTbody">
+                <!-- Injected dynamically via renderFarmerAnalyticsListings -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="analytics-modal-footer">
+        <div class="footer-sync-note">
+          <i data-lucide="database"></i>
+          <span>Live Payout Escrow &amp; Harvest Inventory synced with TAZA MongoDB Engine</span>
+        </div>
+        <div class="footer-actions">
+          <button type="button" class="btn-analytics-close" onclick="closeFarmerHarvestAnalytics()">Close Analytics</button>
+        </div>
       </div>
     </div>
   </div>

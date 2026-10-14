@@ -1497,3 +1497,28 @@ async def test_farmer_pricing_strategy_info_and_20_percent_profit_share_scenario
         assert "_currentPricingScenario" in js, "Missing _currentPricingScenario state var in app.js"
         assert "window.openPricingStrategyInfoModal" in js, "Missing window export for openPricingStrategyInfoModal"
         assert "window.selectPricingScenario" in js, "Missing window export for selectPricingScenario"
+
+
+@pytest.mark.asyncio
+async def test_farmer_harvest_analytics_endpoint():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        res = await ac.get("/api/v1/farmers/harvest-analytics")
+        assert res.status_code == 200
+        data = res.json()
+        assert "farmer_name" in data
+        assert "total_gross_revenue_inr" in data
+        assert data["total_gross_revenue_inr"] > 0
+        assert "revenue_by_crop" in data
+        assert len(data["revenue_by_crop"]) >= 3
+        assert "volume_breakdown" in data
+        assert "total_harvest_kg" in data["volume_breakdown"]
+        assert "crop_listings" in data
+        assert len(data["crop_listings"]) >= 3
+        # Check first crop has valid revenue item fields
+        crop0 = data["revenue_by_crop"][0]
+        assert "crop_name" in crop0
+        assert "revenue_inr" in crop0
+        assert "percentage_of_revenue" in crop0
+        assert "color_hex" in crop0
+

@@ -45,6 +45,29 @@ async def get_current_user(
     return user
 
 
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+
+
+async def get_optional_current_user(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: AsyncIOMotorDatabase = Depends(get_db)
+) -> Optional[User]:
+    if not token:
+        return None
+    payload = decode_access_token(token)
+    if payload is None:
+        return None
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        return None
+    try:
+        user_id = int(user_id_str)
+        user_doc = await db["users"].find_one({"id": user_id})
+        return User.from_doc(user_doc)
+    except Exception:
+        return None
+
+
 def require_roles(allowed_roles: List[UserRole]):
     """Role-Based Access Control dependency factory."""
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:

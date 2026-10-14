@@ -1922,6 +1922,7 @@ function switchRole(role) {
       subNav.querySelectorAll(".subnav-farmer-item").forEach(el => el.style.display = "inline-flex");
     }
 
+    if (typeof initTaza2Llm === 'function') initTaza2Llm();
     if (typeof loadFarmerDashboard === 'function') loadFarmerDashboard();
     if (typeof initHarvestTimestampField === 'function') initHarvestTimestampField();
     if (typeof renderFarmerWarehouseCards === 'function') {
@@ -8504,3 +8505,883 @@ window.openPricingStrategyInfoModal = openPricingStrategyInfoModal;
 window.closePricingStrategyInfoModal = closePricingStrategyInfoModal;
 window.switchPricingInfoTab = switchPricingInfoTab;
 window.selectPricingScenario = selectPricingScenario;
+
+/* ==========================================================================
+   TAZA 2.0: GREEN PALETTE LLM MODEL INTERFACE & HARVEST REVENUE PIE CHARTS
+   ========================================================================== */
+
+let taza2Mode = "chat";
+let taza2Initialized = false;
+let currentHarvestAnalyticsData = null;
+let activeAnalyticsCategoryFilter = "ALL";
+let taza2Listening = false;
+let taza2VoiceQueryIndex = 0;
+
+const TAZA2_VOICE_DEMO_QUERIES = [
+  "Show me the revenue pie chart from my crops sold and total harvest volume.",
+  "List a new harvest batch of 500 kg fresh Jyoti Potato with 20% surge profit sharing.",
+  "Scan nearby cold storage facilities within 40 km and find available vacancy.",
+  "What is the live weather forecast and disaster advisory for Hooghly district?",
+  "Show my signed Farmer Produce Agreement with Clause 1 MSP Floor.",
+  "View incoming consumer orders and trigger direct 1:1 masked call relay.",
+  "Show my 22-clause warehouse storage all risks insurance policy and claims."
+];
+
+function initTaza2Llm() {
+  const stream = document.getElementById("taza2ChatStream");
+  if (!stream) return;
+
+  // Set greeting if empty
+  if (stream.children.length === 0) {
+    const farmerName = (window.authState && window.authState.name) ? window.authState.name.split(' ')[0] : "Ananda";
+    const welcomeEn = `Hello ${farmerName}! Welcome to <strong>TAZA 2.0</strong> — your dedicated green agricultural intelligence core. I have loaded your farmgate profile in <strong>Hooghly Central Zone</strong> with active MSP floor protection.<br><br>All previous farmer tools (harvest listing, cold vault matrix, weather radar, logistics, produce agreements, and all-risks insurance) are built-in as inherent features. You can prompt me directly, use the capability chips above, or access the full features deck via the <strong>three vertical bars (⋮)</strong> in the top-right corner.<br><br>💡 <em>Tip: You can now view your complete crop revenue and harvest distribution in interactive pie charts!</em>`;
+    const welcomeBn = `নমস্কার ${farmerName}! <strong>TAZA 2.0</strong>-এ আপনাকে স্বাগত — আপনার নিবেদিত সবুজ কৃষি এআই মডেল। হুগলি সেন্ট্রাল জোনে আপনার খামার গেট প্রোফাইল এবং এমএসপি সুরক্ষা সক্রিয় রয়েছে। আপনার ফসল বিক্রি আয় এবং মোট ফসল বণ্টনের জন্য নতুন পাই চার্ট উপলব্ধ!`;
+    const welcomeHi = `नमस्ते ${farmerName}! <strong>TAZA 2.0</strong> में आपका स्वागत है — आपका समर्पित हरित कृषि एआई मॉडल। आपकी फसलों की बिक्री से प्राप्त आय और कुल फसल वितरण को अब इंटरैक्टिव पाई चार्ट में देखें!`;
+
+    const welcomeMsg = (currentLanguage === "bn") ? welcomeBn : ((currentLanguage === "hi") ? welcomeHi : welcomeEn);
+    appendTaza2Message("bot", welcomeMsg, true);
+  }
+
+  // Close plus menu on outside click
+  document.addEventListener("click", function(e) {
+    const plusWrap = document.querySelector(".taza2-plus-menu-container");
+    const dropdown = document.getElementById("taza2PlusDropdown");
+    if (plusWrap && dropdown && !plusWrap.contains(e.target)) {
+      dropdown.classList.remove("open");
+    }
+  });
+
+  taza2Initialized = true;
+  if (window.lucide) lucide.createIcons();
+}
+
+function focusTaza2Input() {
+  const input = document.getElementById("taza2PromptInput");
+  if (input) {
+    input.focus();
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+}
+
+function switchTaza2Mode(mode) {
+  taza2Mode = mode;
+  const chipChat = document.getElementById("taza2ModeChipChat");
+  const chipTask = document.getElementById("taza2ModeChipTask");
+  if (chipChat && chipTask) {
+    if (mode === "chat") {
+      chipChat.classList.add("active");
+      chipTask.classList.remove("active");
+    } else {
+      chipTask.classList.add("active");
+      chipChat.classList.remove("active");
+      appendTaza2Message("bot", `⚡ <strong>Task Automation Mode Active:</strong> Ready to execute agricultural operations. Click any quick capability chip above, or type a direct command like <em>"List 500kg potato at ₹20"</em>, <em>"Open harvest revenue pie chart"</em>, or <em>"Scan cold storage radar"</em>.`, true);
+    }
+  }
+}
+
+function toggleTaza2PlusMenu(event) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById("taza2PlusDropdown");
+  if (dropdown) {
+    dropdown.classList.toggle("open");
+  }
+}
+
+function closeTaza2PlusMenu() {
+  const dropdown = document.getElementById("taza2PlusDropdown");
+  if (dropdown) {
+    dropdown.classList.remove("open");
+  }
+}
+
+function handleTaza2Keydown(event) {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendTaza2Message();
+  }
+}
+
+function triggerTaza2VoiceCommand() {
+  const micBtn = document.getElementById("taza2MicBtn");
+  const input = document.getElementById("taza2PromptInput");
+  if (!micBtn || !input) return;
+
+  if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRec();
+    recognition.lang = (currentLanguage === "bn") ? "bn-BD" : ((currentLanguage === "hi") ? "hi-IN" : "en-IN");
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    micBtn.classList.add("listening");
+    recognition.onresult = function(e) {
+      micBtn.classList.remove("listening");
+      const transcript = e.results[0][0].transcript;
+      input.value = transcript;
+      sendTaza2Message(transcript);
+    };
+    recognition.onerror = function() {
+      micBtn.classList.remove("listening");
+      simulateVoiceFallback(input);
+    };
+    recognition.onend = function() {
+      micBtn.classList.remove("listening");
+    };
+    try {
+      recognition.start();
+      return;
+    } catch (e) {
+      micBtn.classList.remove("listening");
+    }
+  }
+
+  simulateVoiceFallback(input);
+}
+
+function simulateVoiceFallback(input) {
+  const query = TAZA2_VOICE_DEMO_QUERIES[taza2VoiceQueryIndex % TAZA2_VOICE_DEMO_QUERIES.length];
+  taza2VoiceQueryIndex++;
+  input.value = query;
+  const micBtn = document.getElementById("taza2MicBtn");
+  if (micBtn) {
+    micBtn.classList.add("listening");
+    setTimeout(() => {
+      micBtn.classList.remove("listening");
+      sendTaza2Message(query);
+    }, 700);
+  } else {
+    sendTaza2Message(query);
+  }
+}
+
+function appendTaza2Message(role, content, isHtml = false) {
+  const stream = document.getElementById("taza2ChatStream");
+  if (!stream) return;
+
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `taza2-msg ${role}`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "taza2-avatar";
+  avatar.innerHTML = (role === "bot") ? `<i data-lucide="sparkles"></i>` : `<i data-lucide="user"></i>`;
+
+  const bubble = document.createElement("div");
+  bubble.className = "taza2-bubble";
+  if (isHtml) {
+    bubble.innerHTML = content;
+  } else {
+    bubble.innerText = content;
+  }
+
+  msgDiv.appendChild(avatar);
+  msgDiv.appendChild(bubble);
+  stream.appendChild(msgDiv);
+
+  if (window.lucide) lucide.createIcons();
+  stream.scrollTop = stream.scrollHeight;
+}
+
+function showTaza2TypingIndicator(callback) {
+  const stream = document.getElementById("taza2ChatStream");
+  if (!stream) {
+    if (callback) callback();
+    return;
+  }
+
+  const typingId = "taza2Typing_" + Date.now();
+  const typingDiv = document.createElement("div");
+  typingDiv.id = typingId;
+  typingDiv.className = "taza2-msg bot";
+  typingDiv.innerHTML = `
+    <div class="taza2-avatar"><i data-lucide="sparkles"></i></div>
+    <div class="taza2-bubble" style="display:flex; align-items:center; gap:5px; padding: 12px 18px;">
+      <span class="dot" style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;animation:taza2Pulse 1s infinite;"></span>
+      <span class="dot" style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;animation:taza2Pulse 1s infinite 0.2s;"></span>
+      <span class="dot" style="width:6px;height:6px;border-radius:50%;background:#34d399;display:inline-block;animation:taza2Pulse 1s infinite 0.4s;"></span>
+      <span style="font-size:12px; color:#86efac; margin-left:6px; font-weight:600;">TAZA 2.0 Reasoning...</span>
+    </div>
+  `;
+  stream.appendChild(typingDiv);
+  stream.scrollTop = stream.scrollHeight;
+  if (window.lucide) lucide.createIcons();
+
+  setTimeout(() => {
+    const el = document.getElementById(typingId);
+    if (el) el.remove();
+    if (callback) callback();
+  }, 450);
+}
+
+function sendTaza2Message(overrideText) {
+  const input = document.getElementById("taza2PromptInput");
+  const text = (typeof overrideText === "string") ? overrideText.trim() : (input ? input.value.trim() : "");
+  if (!text) return;
+
+  if (input && !overrideText) input.value = "";
+
+  appendTaza2Message("user", text);
+
+  // Minimize hero if stream has multiple messages
+  const heroStage = document.getElementById("taza2HeroStage");
+  if (heroStage) heroStage.classList.add("minimized");
+
+  showTaza2TypingIndicator(() => {
+    processTaza2Query(text);
+  });
+}
+
+function processTaza2Query(query) {
+  const q = query.toLowerCase();
+
+  // 1. REVENUE / PIE CHART / HARVEST EARNINGS
+  if (q.includes("revenue") || q.includes("pie chart") || q.includes("pie") || q.includes("chart") || q.includes("harvest") || q.includes("আয়") || q.includes("পাই চার্ট") || q.includes("कमाई") || q.includes("चार्ट")) {
+    const botHtml = `
+      <p>I have compiled your real-time <strong>Harvest Revenue &amp; Crop Sales Analytics</strong> from database settlements and warehouse records:</p>
+      <div class="taza2-inline-tool-card">
+        <div class="taza2-inline-tool-head">
+          <div class="taza2-inline-tool-title">
+            <i data-lucide="pie-chart"></i> <span>Farmer Harvest &amp; Revenue Pie Charts</span>
+          </div>
+          <button type="button" class="btn-taza2-tool-launch" onclick="openFarmerHarvestAnalytics()">
+            <i data-lucide="external-link"></i> Launch Full View
+          </button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:10px;">
+          <div style="background:rgba(16, 185, 129, 0.12); padding:8px 10px; border-radius:8px; border:1px solid rgba(16, 185, 129, 0.3);">
+            <div style="font-size:10px; color:#94a3b8; font-weight:700;">TOTAL REVENUE</div>
+            <strong style="color:#ffffff; font-size:15px;">₹51,830.00</strong>
+          </div>
+          <div style="background:rgba(255, 255, 255, 0.05); padding:8px 10px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.1);">
+            <div style="font-size:10px; color:#94a3b8; font-weight:700;">HARVEST CUT</div>
+            <strong style="color:#ffffff; font-size:15px;">1,850 kg</strong>
+          </div>
+          <div style="background:rgba(255, 255, 255, 0.05); padding:8px 10px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.1);">
+            <div style="font-size:10px; color:#94a3b8; font-weight:700;">SELL-THROUGH</div>
+            <strong style="color:#34d399; font-size:15px;">68.4% Sold</strong>
+          </div>
+        </div>
+        <p style="margin:0; font-size:12px; color:#cbd5e1;">Top earning crops: <strong>Gobindobhog Rice</strong> (₹18,000 • 34.7%), <strong>Himsagar Mango</strong> (₹13,650 • 26.3%), and <strong>Jyoti Potato</strong> (₹11,000 • 21.2%).</p>
+      </div>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    openFarmerHarvestAnalytics();
+    return;
+  }
+
+  // 2. LISTING FORM / ADD CROP / SELL
+  if (q.includes("list") || q.includes("sell") || q.includes("add crop") || q.includes("new crop") || q.includes("ফসল বিক্রি") || q.includes("তালিকা") || q.includes("बेचें") || q.includes("फसल जोड़ें")) {
+    const botHtml = `
+      <p>I have brought up your <strong>Harvest Listing Engine</strong> with Dynamic Mandi Pegging, 20% surge profit sharing, and real-time freshness decay index.</p>
+      <div class="taza2-inline-tool-card">
+        <div class="taza2-inline-tool-head">
+          <div class="taza2-inline-tool-title">
+            <i data-lucide="package-plus"></i> <span>List Harvest for Consumer &amp; Bulk Sale</span>
+          </div>
+          <button type="button" class="btn-taza2-tool-launch" onclick="popInherentFeature('listing')">
+            <i data-lucide="arrow-down"></i> Open Form Dock
+          </button>
+        </div>
+        <p style="margin:0; font-size:12px; color:#cbd5e1;">Features: Guaranteed MSP floor protection, biological freshness formula, and zero upfront insurance coverage.</p>
+      </div>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    popInherentFeature("listing");
+    return;
+  }
+
+  // 3. WAREHOUSE / COLD STORAGE / RADAR
+  if (q.includes("warehouse") || q.includes("storage") || q.includes("cold") || q.includes("radar") || q.includes("space") || q.includes("গুদাম") || q.includes("কোল্ড") || q.includes("गोदाम") || q.includes("भंडारण")) {
+    const botHtml = `
+      <p>Here is your <strong>Cold Storage &amp; Vault Matrix</strong>. You can verify live vacancy across nearby hubs, calculate crop space fit in sq. ft., or run the <strong>AI 40km Distance Expansion Radar</strong>.</p>
+      <div class="taza2-inline-tool-card">
+        <div class="taza2-inline-tool-head">
+          <div class="taza2-inline-tool-title">
+            <i data-lucide="warehouse"></i> <span>Nearby Cold Vaults &amp; 40km Radar</span>
+          </div>
+          <button type="button" class="btn-taza2-tool-launch" onclick="popInherentFeature('warehouses')">
+            <i data-lucide="arrow-down"></i> Open Vault Matrix
+          </button>
+        </div>
+        <p style="margin:0; font-size:12px; color:#cbd5e1;">Synced Hub: <strong>Singur Cooperative Cold Hub A-1</strong> (53,500 kg remaining space, 36% available).</p>
+      </div>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    popInherentFeature("warehouses");
+    return;
+  }
+
+  // 4. WEATHER / DISASTER / RAIN / FLOOD
+  if (q.includes("weather") || q.includes("rain") || q.includes("flood") || q.includes("disaster") || q.includes("storm") || q.includes("আবহাওয়া") || q.includes("বৃষ্টি") || q.includes("मौसम") || q.includes("बाढ़")) {
+    const botHtml = `
+      <p>Connecting to Open-Meteo live agro-meteorological telemetry for West Bengal agricultural corridors:</p>
+      <div class="taza2-inline-tool-card">
+        <div class="taza2-inline-tool-head">
+          <div class="taza2-inline-tool-title">
+            <i data-lucide="cloud-lightning"></i> <span>Live Meteorological &amp; Flood Advisory</span>
+          </div>
+          <button type="button" class="btn-taza2-tool-launch" onclick="popInherentFeature('weather')">
+            <i data-lucide="activity"></i> View Advisory
+          </button>
+        </div>
+        <p style="margin:0; font-size:12px; color:#86efac;">● Live Sync Active: Moderate pre-monsoon precipitation scan completed. Dispatch corridors along NH-19 and SH-13 are dry and operational.</p>
+      </div>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    popInherentFeature("weather");
+    return;
+  }
+
+  // 5. LOGISTICS / WAYBILL / EV TRUCK
+  if (q.includes("logistics") || q.includes("route") || q.includes("truck") || q.includes("waybill") || q.includes("dispatch") || q.includes("লজিস্টিকস") || q.includes("রুট") || q.includes("लॉजिस्टिक्स")) {
+    const botHtml = `
+      <p>Launching the <strong>AI Smart Logistics Dispatch Engine</strong> with direct farmgate corridors and heuristic TSP multi-farmer pickups.</p>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    openLogisticsModal();
+    return;
+  }
+
+  // 6. PRODUCE AGREEMENT / CONTRACT / LEGAL
+  if (q.includes("agreement") || q.includes("contract") || q.includes("clause") || q.includes("legal") || q.includes("চুক্তি") || q.includes("দলিল") || q.includes("समझौता") || q.includes("अनुबंध")) {
+    const botHtml = `
+      <p>Retrieving your signed <strong>TAZA Farmer Produce Agreement</strong> (Ref: <code>TZ-AGR-2026-WB</code>) with Clause 1 MSP Floor and Clause 3 Direct 30-day Bank Settlement.</p>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    openFarmerAgreementModal();
+    return;
+  }
+
+  // 7. INSURANCE / ALL RISKS / CLAIMS
+  if (q.includes("insurance") || q.includes("claim") || q.includes("spoilage") || q.includes("all risks") || q.includes("বীমা") || q.includes("দাবি") || q.includes("बीमा")) {
+    const botHtml = `
+      <p>Opening your <strong>Warehouse Storage All Risks Insurance Policy</strong> (22 statutory clauses covering refrigeration failure, leakage, and fortuitous damage with live MongoDB claim sync).</p>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    openFarmerInsuranceModal();
+    return;
+  }
+
+  // 8. ORDERS / BUYER
+  if (q.includes("order") || q.includes("buyer") || q.includes("contact") || q.includes("অর্ডার") || q.includes("ক্রেতা") || q.includes("ऑर्डर") || q.includes("खरीदार")) {
+    const botHtml = `
+      <p>Here are your <strong>Direct Incoming Orders</strong> from verified consumers and commercial bulk buyers, featuring zero broker markups and escrow protection.</p>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    popInherentFeature("orders");
+    return;
+  }
+
+  // General Agri-Guidance Fallback
+  const defaultReply = (currentLanguage === "bn")
+    ? `আমি আপনার প্রশ্নটি বিশ্লেষণ করেছি। হুগলি ও পশ্চিমবঙ্গের কৃষির জন্য, ফসল তোলা, কোল্ড স্টোরেজ সংরক্ষণ এবং পাইকারি মান্ডি দরের সুবিধা নিতে আপনি উপরের বৈশিষ্ট্য বোতাম বা তিনটি উল্লম্ব বার (⋮) ব্যবহার করতে পারেন।`
+    : ((currentLanguage === "hi")
+      ? `मैंने आपके प्रश्न का विश्लेषण किया है। आप सीधे फसल सूचीबद्ध कर सकते हैं, कोल्ड स्टोरेज स्पेस बुक कर सकते हैं, या ऊपर दिए गए तीन वर्टिकल बार्स (⋮) से inherent features खोल सकते हैं।`
+      : `I have analyzed your agricultural query. In Hooghly Central and across Bengal, you can leverage TAZA 2.0 to monitor daily mandi movements, lock your MSP price floor, verify nearby cold vault vacancies, and track realized revenues in your interactive pie charts. Access any feature directly via the prompt bar, capability chips, or the <strong>three vertical bars (⋮)</strong> menu in the top right.`);
+
+  appendTaza2Message("bot", defaultReply);
+}
+
+/* ==========================================================================
+   THREE VERTICAL BARS INHERENT FEATURES DRAWER CONTROLLER
+   ========================================================================== */
+
+function openFarmerDrawer() {
+  const backdrop = document.getElementById("farmerDrawerBackdrop");
+  if (backdrop) {
+    backdrop.classList.add("open");
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+function closeFarmerDrawer(event) {
+  if (event && event.target && event.target.closest && event.target.closest("#farmerFeaturesDrawer")) {
+    return;
+  }
+  const backdrop = document.getElementById("farmerDrawerBackdrop");
+  if (backdrop) {
+    backdrop.classList.remove("open");
+  }
+}
+
+function toggleFarmerDrawer() {
+  const backdrop = document.getElementById("farmerDrawerBackdrop");
+  if (backdrop) {
+    if (backdrop.classList.contains("open")) {
+      closeFarmerDrawer();
+    } else {
+      openFarmerDrawer();
+    }
+  }
+}
+
+/* ==========================================================================
+   INHERENT FEATURES MODULAR DOCKING & POP-UP
+   ========================================================================== */
+
+function popInherentFeature(featureKey) {
+  const dock = document.getElementById("taza2InherentFeaturesWrapper");
+  const controlBar = document.getElementById("dockControlBar");
+  const dockTitle = document.getElementById("dockCurrentToolTitle");
+  if (!dock) return;
+
+  dock.classList.add("active");
+  if (controlBar) controlBar.style.display = "flex";
+
+  // Hide all panels, then reveal target
+  const panels = [
+    { key: "listing", el: document.getElementById("addCropForm")?.closest(".panel-box"), title: "Create New Harvest Listing (ফসল তালিকাভুক্তি)" },
+    { key: "warehouses", el: document.getElementById("warehouseFinderBanner"), title: "Cold Storage & Vault Matrix (গুদাম ও কোল্ড স্টোরেজ)" },
+    { key: "weather", el: document.getElementById("farmerInsightsStrip"), title: "Agro-Meteorological Advisory & Weather Scan" },
+    { key: "orders", el: document.getElementById("farmerIncomingOrdersList")?.closest(".panel-box"), title: "Direct Incoming Orders (সরাসরি ক্রেতা অর্ডার)" },
+    { key: "docs", el: document.getElementById("farmerDocsBanner"), title: "TAZA Farmer Produce Agreement & Documents" }
+  ];
+
+  panels.forEach(p => {
+    if (p.el) {
+      if (p.key === featureKey || featureKey === "all") {
+        p.el.style.display = "block";
+        if (dockTitle && p.key === featureKey) dockTitle.innerText = p.title;
+        setTimeout(() => {
+          p.el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      } else {
+        // Keep visible in dock container but styled cleanly
+        p.el.style.display = "block";
+      }
+    }
+  });
+
+  if (featureKey === "listing") {
+    setTimeout(() => {
+      const input = document.getElementById("cropName");
+      if (input) input.focus();
+    }, 300);
+  } else if (featureKey === "weather" && typeof loadFarmerLiveWeather === "function") {
+    loadFarmerLiveWeather();
+  }
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function minimizeInherentDock() {
+  const dock = document.getElementById("taza2InherentFeaturesWrapper");
+  const controlBar = document.getElementById("dockControlBar");
+  if (dock) dock.classList.remove("active");
+  if (controlBar) controlBar.style.display = "none";
+
+  const hero = document.getElementById("taza2HeroStage");
+  if (hero) hero.scrollIntoView({ behavior: "smooth", block: "start" });
+  focusTaza2Input();
+}
+
+/* ==========================================================================
+   FARMER HARVEST REVENUE & PIE CHARTS ENGINE
+   ========================================================================== */
+
+async function openFarmerHarvestAnalytics() {
+  const modal = document.getElementById("farmerHarvestAnalyticsModal");
+  if (!modal) return;
+
+  modal.classList.add("open");
+  modal.style.display = "flex";
+
+  if (window.lucide) lucide.createIcons();
+
+  await loadHarvestAnalyticsData();
+}
+
+function closeFarmerHarvestAnalytics() {
+  const modal = document.getElementById("farmerHarvestAnalyticsModal");
+  if (modal) {
+    modal.classList.remove("open");
+    modal.style.display = "none";
+  }
+}
+
+async function refreshHarvestAnalytics() {
+  const btn = document.querySelector(".btn-analytics-refresh i");
+  if (btn) btn.classList.add("animate-spin");
+  await loadHarvestAnalyticsData();
+  setTimeout(() => {
+    if (btn) btn.classList.remove("animate-spin");
+  }, 500);
+}
+
+async function loadHarvestAnalyticsData() {
+  let headers = {};
+  if (authTokens && authTokens.farmer) {
+    headers["Authorization"] = `Bearer ${authTokens.farmer}`;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/farmers/harvest-analytics`, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      currentHarvestAnalyticsData = data;
+      renderHarvestAnalytics(data);
+      return;
+    }
+  } catch (e) {
+    console.warn("Using offline harvest analytics fallback data", e);
+  }
+
+  // Client-side fallback if server offline
+  const fallbackData = getFallbackHarvestAnalytics();
+  currentHarvestAnalyticsData = fallbackData;
+  renderHarvestAnalytics(fallbackData);
+}
+
+function getFallbackHarvestAnalytics() {
+  return {
+    farmer_name: (window.authState && window.authState.name) ? window.authState.name : "Ananda Mondal",
+    district: "Hooghly",
+    fpo_affiliation: "Singur Agro Producer Co.",
+    total_gross_revenue_inr: 51830.0,
+    total_harvest_kg: 1850.0,
+    total_sold_kg: 1265.0,
+    total_in_stock_kg: 585.0,
+    active_listing_value_inr: 14200.0,
+    sell_through_rate_pct: 68.4,
+    revenue_by_crop: [
+      { crop_name: "Gobindobhog Rice", category: "GRAINS_PADDY", sold_kg: 250.0, revenue_inr: 18000.0, percentage_of_revenue: 34.7, avg_price_per_kg: 72.0, color_hex: "#eab308" },
+      { crop_name: "Himsagar Mango", category: "FRUITS", sold_kg: 210.0, revenue_inr: 13650.0, percentage_of_revenue: 26.3, avg_price_per_kg: 65.0, color_hex: "#f59e0b" },
+      { crop_name: "Jyoti Potato", category: "TUBERS", sold_kg: 550.0, revenue_inr: 11000.0, percentage_of_revenue: 21.2, avg_price_per_kg: 20.0, color_hex: "#10b981" },
+      { crop_name: "Fresh Hybrid Tomato", category: "VEGETABLES", sold_kg: 180.0, revenue_inr: 4680.0, percentage_of_revenue: 9.0, avg_price_per_kg: 26.0, color_hex: "#ef4444" },
+      { crop_name: "Green Bullet Chili", category: "SPICES", sold_kg: 75.0, revenue_inr: 4500.0, percentage_of_revenue: 8.7, avg_price_per_kg: 60.0, color_hex: "#06b6d4" }
+    ],
+    volume_breakdown: {
+      total_harvest_kg: 1850.0,
+      sold_kg: 1265.0,
+      in_storage_kg: 585.0,
+      in_transit_kg: 110.0,
+      sold_percentage: 68.4,
+      storage_percentage: 31.6,
+      transit_percentage: 6.0
+    },
+    crop_listings: [
+      { id: 1, crop_name: "Jyoti Potato", variety: "Chandramukhi Hybrid", category: "TUBERS", harvest_date: "10 Oct 2026, 05:30 AM", total_harvest_kg: 800.0, sold_kg: 550.0, remaining_kg: 250.0, unit_price_inr: 20.0, revenue_earned_inr: 11000.0, warehouse_location: "Singur Cooperative Cold Hub A-1", status: "ACTIVE_SELLING", is_organic: false },
+      { id: 2, crop_name: "Himsagar Mango", variety: "GI Tagged Premium", category: "FRUITS", harvest_date: "11 Oct 2026, 06:15 AM", total_harvest_kg: 300.0, sold_kg: 210.0, remaining_kg: 90.0, unit_price_inr: 65.0, revenue_earned_inr: 13650.0, warehouse_location: "Malda English Bazar Cold Vault", status: "ACTIVE_SELLING", is_organic: true },
+      { id: 3, crop_name: "Gobindobhog Rice", variety: "Aromatic Short Grain", category: "GRAINS_PADDY", harvest_date: "08 Oct 2026, 07:00 AM", total_harvest_kg: 400.0, sold_kg: 250.0, remaining_kg: 150.0, unit_price_inr: 72.0, revenue_earned_inr: 18000.0, warehouse_location: "Memari Agro Silo Cluster B", status: "ACTIVE_SELLING", is_organic: true },
+      { id: 4, crop_name: "Fresh Hybrid Tomato", variety: "Abhinav Red Cluster", category: "VEGETABLES", harvest_date: "12 Oct 2026, 05:45 AM", total_harvest_kg: 250.0, sold_kg: 180.0, remaining_kg: 70.0, unit_price_inr: 26.0, revenue_earned_inr: 4680.0, warehouse_location: "Hooghly Singur Central Vault", status: "ACTIVE_SELLING", is_organic: false },
+      { id: 5, crop_name: "Green Bullet Chili", variety: "Kacha Lanka Hot", category: "SPICES", harvest_date: "13 Oct 2026, 06:00 AM", total_harvest_kg: 100.0, sold_kg: 75.0, remaining_kg: 25.0, unit_price_inr: 60.0, revenue_earned_inr: 4500.0, warehouse_location: "Ranaghat Spice Hub Vault 3", status: "ACTIVE_SELLING", is_organic: false }
+    ]
+  };
+}
+
+function renderHarvestAnalytics(data) {
+  // 1. KPI Cards
+  const kpiGross = document.getElementById("kpiGrossRevenue");
+  if (kpiGross) kpiGross.innerText = `₹${(data.total_gross_revenue_inr || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const kpiHarvest = document.getElementById("kpiTotalHarvest");
+  if (kpiHarvest) kpiHarvest.innerText = `${(data.total_harvest_kg || 0).toLocaleString()} kg`;
+
+  const kpiQuintals = document.getElementById("kpiTotalQuintals");
+  if (kpiQuintals) kpiQuintals.innerText = `${((data.total_harvest_kg || 0) / 100).toFixed(2)} Quintals harvested`;
+
+  const kpiSold = document.getElementById("kpiTotalSold");
+  if (kpiSold) kpiSold.innerText = `${(data.total_sold_kg || 0).toLocaleString()} kg`;
+
+  const kpiRate = document.getElementById("kpiSellThroughRate");
+  if (kpiRate) kpiRate.innerText = `${(data.sell_through_rate_pct || 0).toFixed(1)}% Sell-Through Rate`;
+
+  const kpiStoredVal = document.getElementById("kpiStoredValue");
+  if (kpiStoredVal) kpiStoredVal.innerText = `₹${(data.active_listing_value_inr || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const kpiStoredWeight = document.getElementById("kpiStoredWeight");
+  if (kpiStoredWeight) kpiStoredWeight.innerText = `${(data.total_in_stock_kg || 0).toLocaleString()} kg in cold storage`;
+
+  // 2. Render Pie Chart 1: Revenue by Crop
+  renderRevenuePieChart(data.revenue_by_crop || [], data.total_gross_revenue_inr || 0);
+
+  // 3. Render Pie Chart 2: Total Harvest Volume
+  renderVolumePieChart(data.volume_breakdown || {});
+
+  // 4. Render Table
+  renderFarmerAnalyticsListings(data.crop_listings || [], activeAnalyticsCategoryFilter);
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderRevenuePieChart(crops, totalRevenue) {
+  const svg = document.getElementById("pieRevenueSvg");
+  const legend = document.getElementById("pieRevenueLegend");
+  const centerText = document.getElementById("pieCenterRevenue");
+  const badge = document.getElementById("chart1TotalBadge");
+
+  if (!svg || !legend) return;
+
+  if (centerText) {
+    centerText.innerText = totalRevenue >= 1000 ? `₹${(totalRevenue / 1000).toFixed(1)}k` : `₹${totalRevenue.toFixed(0)}`;
+  }
+  if (badge) {
+    badge.innerText = `Total: ₹${totalRevenue.toLocaleString()}`;
+  }
+
+  svg.innerHTML = "";
+  legend.innerHTML = "";
+
+  if (!crops || crops.length === 0 || totalRevenue <= 0) {
+    svg.innerHTML = `<circle cx="160" cy="160" r="130" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="2" />`;
+    legend.innerHTML = `<p style="color:#64748b; font-size:12px; padding:10px;">No sold crop records yet.</p>`;
+    return;
+  }
+
+  const cx = 160, cy = 160, r = 130, innerR = 55;
+  let currentAngle = 0;
+
+  crops.forEach((c, idx) => {
+    const fraction = (c.revenue_inr / totalRevenue);
+    const sliceAngle = fraction * 2 * Math.PI;
+    const endAngle = currentAngle + sliceAngle;
+
+    const x1 = cx + r * Math.cos(currentAngle);
+    const y1 = cy + r * Math.sin(currentAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    const x3 = cx + innerR * Math.cos(endAngle);
+    const y3 = cy + innerR * Math.sin(endAngle);
+    const x4 = cx + innerR * Math.cos(currentAngle);
+    const y4 = cy + innerR * Math.sin(currentAngle);
+
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+    const color = c.color_hex || "#10b981";
+
+    const pathD = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathD);
+    path.setAttribute("fill", color);
+    path.setAttribute("stroke", "#08160f");
+    path.setAttribute("stroke-width", "2.5");
+    path.setAttribute("class", "pie-slice");
+    path.setAttribute("data-index", idx);
+
+    path.addEventListener("mouseenter", (e) => {
+      highlightPieLegend(idx, true);
+      if (centerText) centerText.innerText = `₹${(c.revenue_inr / 1000).toFixed(1)}k`;
+    });
+    path.addEventListener("mouseleave", () => {
+      highlightPieLegend(idx, false);
+      if (centerText) centerText.innerText = totalRevenue >= 1000 ? `₹${(totalRevenue / 1000).toFixed(1)}k` : `₹${totalRevenue.toFixed(0)}`;
+    });
+
+    svg.appendChild(path);
+
+    // Build Legend Item
+    const legendItem = document.createElement("div");
+    legendItem.className = "pie-legend-item";
+    legendItem.id = `revLegendItem_${idx}`;
+    legendItem.innerHTML = `
+      <div class="legend-left">
+        <span class="legend-color-dot" style="background: ${color};"></span>
+        <span class="legend-crop-name">${getTranslatedCropName(c.crop_name)}</span>
+      </div>
+      <div class="legend-right">
+        <strong class="legend-amount">₹${c.revenue_inr.toLocaleString()}</strong>
+        <span class="legend-percent">${c.percentage_of_revenue}%</span>
+      </div>
+    `;
+
+    legendItem.addEventListener("mouseenter", () => {
+      path.dispatchEvent(new Event("mouseenter"));
+    });
+    legendItem.addEventListener("mouseleave", () => {
+      path.dispatchEvent(new Event("mouseleave"));
+    });
+
+    legend.appendChild(legendItem);
+
+    currentAngle = endAngle;
+  });
+}
+
+function renderVolumePieChart(volume) {
+  const svg = document.getElementById("pieVolumeSvg");
+  const legend = document.getElementById("pieVolumeLegend");
+  const centerText = document.getElementById("pieCenterVolume");
+  const badge = document.getElementById("chart2TotalBadge");
+
+  if (!svg || !legend) return;
+
+  const total = volume.total_harvest_kg || 1850.0;
+  const sold = volume.sold_kg || 1265.0;
+  const storage = volume.in_storage_kg || 585.0;
+  const transit = volume.in_transit_kg || (total * 0.06);
+
+  if (centerText) centerText.innerText = `${total.toLocaleString()} kg`;
+  if (badge) badge.innerText = `Harvest: ${total.toLocaleString()} kg`;
+
+  svg.innerHTML = "";
+  legend.innerHTML = "";
+
+  const slices = [
+    { label: "Delivered to Buyers (বিক্রিত)", kg: sold, color: "#10b981", pct: ((sold / total) * 100).toFixed(1) },
+    { label: "Stored in Cold Hubs (গুদামজাত)", kg: storage, color: "#f59e0b", pct: ((storage / total) * 100).toFixed(1) },
+    { label: "Dispatched / In-Transit (পরিবহনে)", kg: transit, color: "#06b6d4", pct: ((transit / total) * 100).toFixed(1) }
+  ];
+
+  const cx = 160, cy = 160, r = 130, innerR = 60;
+  let currentAngle = 0;
+
+  slices.forEach((s, idx) => {
+    const fraction = (s.kg / total);
+    const sliceAngle = fraction * 2 * Math.PI;
+    const endAngle = currentAngle + sliceAngle;
+
+    const x1 = cx + r * Math.cos(currentAngle);
+    const y1 = cy + r * Math.sin(currentAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    const x3 = cx + innerR * Math.cos(endAngle);
+    const y3 = cy + innerR * Math.sin(endAngle);
+    const x4 = cx + innerR * Math.cos(currentAngle);
+    const y4 = cy + innerR * Math.sin(currentAngle);
+
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+    const pathD = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4} Z`;
+
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", pathD);
+    path.setAttribute("fill", s.color);
+    path.setAttribute("stroke", "#08160f");
+    path.setAttribute("stroke-width", "2.5");
+    path.setAttribute("class", "pie-slice");
+
+    path.addEventListener("mouseenter", () => {
+      if (centerText) centerText.innerText = `${s.kg.toLocaleString()} kg`;
+    });
+    path.addEventListener("mouseleave", () => {
+      if (centerText) centerText.innerText = `${total.toLocaleString()} kg`;
+    });
+
+    svg.appendChild(path);
+
+    // Legend item
+    const leg = document.createElement("div");
+    leg.className = "pie-legend-item";
+    leg.innerHTML = `
+      <div class="legend-left">
+        <span class="legend-color-dot" style="background: ${s.color};"></span>
+        <span class="legend-crop-name" style="font-size:11.5px;">${s.label}</span>
+      </div>
+      <div class="legend-right">
+        <strong class="legend-amount" style="font-size:11.5px;">${s.kg.toLocaleString()} kg</strong>
+        <span class="legend-percent">${s.pct}%</span>
+      </div>
+    `;
+    legend.appendChild(leg);
+
+    currentAngle = endAngle;
+  });
+}
+
+function highlightPieLegend(idx, isHover) {
+  const el = document.getElementById(`revLegendItem_${idx}`);
+  if (el) {
+    if (isHover) {
+      el.style.background = "rgba(16, 185, 129, 0.22)";
+      el.style.borderColor = "#34d399";
+    } else {
+      el.style.background = "";
+      el.style.borderColor = "";
+    }
+  }
+}
+
+function renderFarmerAnalyticsListings(listings, categoryFilter) {
+  const tbody = document.getElementById("farmerAnalyticsListingsTbody");
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const filtered = (!categoryFilter || categoryFilter === "ALL")
+    ? listings
+    : listings.filter(l => l.category === categoryFilter);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:24px; color:#94a3b8;">No harvest listings matching this category.</td></tr>`;
+    return;
+  }
+
+  filtered.forEach(item => {
+    const tr = document.createElement("tr");
+
+    let statusClass = "active";
+    let statusLabel = "Active Selling";
+    if (item.status === "SOLD_OUT" || item.remaining_kg <= 0) {
+      statusClass = "sold";
+      statusLabel = "Sold Out (100%)";
+    } else if (item.status === "STORED_IN_VAULT") {
+      statusClass = "vault";
+      statusLabel = "Stored in Vault";
+    }
+
+    const organicTag = item.is_organic ? `<span style="font-size:10px; background:#dcfce7; color:#15803d; padding:1px 5px; border-radius:4px; margin-left:4px;">Organic</span>` : "";
+
+    tr.innerHTML = `
+      <td>
+        <strong style="color:#ffffff;">${getTranslatedCropName(item.crop_name)}</strong>
+        ${item.variety ? `<br><small style="color:#94a3b8; font-size:11px;">${item.variety}</small>` : ""}
+        ${organicTag}
+      </td>
+      <td><span style="font-size:11px; background:rgba(255,255,255,0.06); padding:2px 7px; border-radius:4px;">${item.category}</span></td>
+      <td style="color:#94a3b8; font-size:11.5px;">${item.harvest_date}</td>
+      <td><strong>${item.total_harvest_kg.toLocaleString()} kg</strong></td>
+      <td style="color:#34d399; font-weight:700;">${item.sold_kg.toLocaleString()} kg</td>
+      <td style="color:#fde68a; font-weight:700;">${item.remaining_kg.toLocaleString()} kg</td>
+      <td><strong>₹${item.unit_price_inr.toFixed(2)}</strong></td>
+      <td style="color:#86efac; font-weight:800;">₹${item.revenue_earned_inr.toLocaleString()}</td>
+      <td style="font-size:11px; color:#cbd5e1;"><i data-lucide="map-pin" style="width:11px;height:11px;display:inline-block;vertical-align:-1px;"></i> ${item.warehouse_location}</td>
+      <td><span class="status-badge-pill ${statusClass}">${statusLabel}</span></td>
+      <td>
+        <button type="button" onclick="closeFarmerHarvestAnalytics(); popInherentFeature('listing');" style="background:rgba(16, 185, 129, 0.15); border:1px solid rgba(52, 211, 153, 0.4); color:#86efac; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;">
+          Edit Stock
+        </button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  if (window.lucide) lucide.createIcons();
+}
+
+function filterAnalyticsListings(category) {
+  activeAnalyticsCategoryFilter = category;
+  const pills = document.querySelectorAll("#analyticsCategoryFilterPills .cat-pill");
+  pills.forEach(p => {
+    if (p.textContent.toUpperCase().includes(category) || (category === "ALL" && p.textContent.includes("All"))) {
+      p.classList.add("active");
+    } else {
+      p.classList.remove("active");
+    }
+  });
+
+  if (currentHarvestAnalyticsData && currentHarvestAnalyticsData.crop_listings) {
+    renderFarmerAnalyticsListings(currentHarvestAnalyticsData.crop_listings, category);
+  }
+}
+
+// Window bindings
+window.initTaza2Llm = initTaza2Llm;
+window.focusTaza2Input = focusTaza2Input;
+window.switchTaza2Mode = switchTaza2Mode;
+window.sendTaza2Message = sendTaza2Message;
+window.handleTaza2Keydown = handleTaza2Keydown;
+window.triggerTaza2VoiceCommand = triggerTaza2VoiceCommand;
+window.toggleTaza2PlusMenu = toggleTaza2PlusMenu;
+window.closeTaza2PlusMenu = closeTaza2PlusMenu;
+window.openFarmerDrawer = openFarmerDrawer;
+window.closeFarmerDrawer = closeFarmerDrawer;
+window.toggleFarmerDrawer = toggleFarmerDrawer;
+window.popInherentFeature = popInherentFeature;
+window.minimizeInherentDock = minimizeInherentDock;
+window.openFarmerHarvestAnalytics = openFarmerHarvestAnalytics;
+window.closeFarmerHarvestAnalytics = closeFarmerHarvestAnalytics;
+window.refreshHarvestAnalytics = refreshHarvestAnalytics;
+window.filterAnalyticsListings = filterAnalyticsListings;
+

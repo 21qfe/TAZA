@@ -150,3 +150,54 @@ class FarmerPricingScenarioResponse(BaseModel):
     scenario_summary: str
     explanation: str
 
+
+class CropRevenueItem(BaseModel):
+    crop_name: str
+    category: str
+    sold_kg: float
+    revenue_inr: float
+    percentage_of_revenue: float
+    avg_price_per_kg: float
+    color_hex: Optional[str] = None
+
+
+class HarvestVolumeBreakdown(BaseModel):
+    total_harvest_kg: float
+    sold_kg: float
+    in_storage_kg: float
+    in_transit_kg: float
+    sold_percentage: float
+    storage_percentage: float
+    transit_percentage: float
+
+
+class CropPerformanceItem(BaseModel):
+    id: int
+    crop_name: str
+    variety: Optional[str] = None
+    category: str
+    harvest_date: str
+    total_harvest_kg: float
+    sold_kg: float
+    remaining_kg: float
+    unit_price_inr: float
+    revenue_earned_inr: float
+    warehouse_location: str
+    status: str  # "SOLD_OUT", "ACTIVE_SELLING", "STORED_IN_VAULT"
+    is_organic: bool = False
+
+
+class FarmerHarvestAnalyticsResponse(BaseModel):
+    farmer_name: str
+    district: str
+    fpo_affiliation: Optional[str] = None
+    total_gross_revenue_inr: float
+    total_harvest_kg: float
+    total_sold_kg: float
+    total_in_stock_kg: float
+    active_listing_value_inr: float
+    sell_through_rate_pct: float
+    revenue_by_crop: List[CropRevenueItem]
+    volume_breakdown: HarvestVolumeBreakdown
+    crop_listings: List[CropPerformanceItem]
+
