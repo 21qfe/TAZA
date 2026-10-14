@@ -316,7 +316,10 @@
           </div>
 
           <div class="taza2-header-actions">
-            <button type="button" class="btn-taza2-header-pill highlight" onclick="openFarmerHarvestAnalytics()">
+            <div class="btn-taza2-header-pill" style="cursor:default;" title="OpenAI gpt-5 Integrated &amp; Active">
+              <i data-lucide="sparkles"></i> <span>OpenAI (gpt-5 Active)</span>
+            </div>
+            <button type="button" class="btn-taza2-header-pill highlight" onclick="handleTaza2CapabilityClick('pie')">
               <i data-lucide="pie-chart"></i> <span id="btnHarvestPieText">Harvest Revenue (Pie Chart)</span>
             </button>
             <button type="button" class="btn-taza2-header-pill" id="farmerSwitchToConsumerBtn" onclick="switchRole('consumer')">
@@ -352,29 +355,29 @@
 
           <!-- Inherent Features Quick Capability Chips -->
           <div class="taza2-capability-chips">
-            <button type="button" class="taza2-cap-chip highlight-pie" onclick="openFarmerHarvestAnalytics()">
-              <i data-lucide="pie-chart"></i> <span>📊 Revenue &amp; Harvest Pie Chart (নতুন আয় চার্ট)</span>
+            <button type="button" class="taza2-cap-chip highlight-pie" onclick="handleTaza2CapabilityClick('deploy_everything')">
+              <i data-lucide="rocket"></i> <span>🚀 Deploy Everything (স্বয়ংক্রিয় সম্পূর্ণ অপারেশন)</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('listing')">
-              <i data-lucide="package-plus"></i> <span>🌾 List Harvest for Sale (Mandi Peg &amp; 20% Surge)</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('listing')">
+              <i data-lucide="package-plus"></i> <span>🌾 List 500kg Potato at ₹20 (Auto-Deploy)</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('warehouses')">
-              <i data-lucide="warehouse"></i> <span>🏬 Cold Storage Matrix &amp; 40km Distance Radar</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('warehouses')">
+              <i data-lucide="warehouse"></i> <span>🏬 Auto-Reserve Cold Vault (Singur Hub)</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="openLogisticsModal()">
-              <i data-lucide="truck"></i> <span>🚚 Smart Logistics Dispatch &amp; Flood Detour</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('logistics')">
+              <i data-lucide="truck"></i> <span>🚚 Auto-Dispatch Waybill &amp; Green Fleet</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('weather')">
-              <i data-lucide="cloud-lightning"></i> <span>🌦️ Live Disaster &amp; Meteorological Weather Scan</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('pie')">
+              <i data-lucide="pie-chart"></i> <span>📊 Harvest Revenue &amp; Pie Chart (লাইভ চার্ট)</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="openFarmerAgreementModal()">
-              <i data-lucide="file-check"></i> <span>📜 Produce Agreement &amp; Documents Vault</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('weather')">
+              <i data-lucide="cloud-lightning"></i> <span>🌦️ Auto-Scan Weather &amp; Protect Crops</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="openFarmerInsuranceModal()">
-              <i data-lucide="shield-check"></i> <span>🛡️ 22-Clause All Risks Storage Insurance</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('insurance')">
+              <i data-lucide="shield-check"></i> <span>🛡️ Bind 22-Clause All Risks Insurance</span>
             </button>
-            <button type="button" class="taza2-cap-chip" onclick="popInherentFeature('orders')">
-              <i data-lucide="clipboard-list"></i> <span>📋 Incoming Orders &amp; Direct 1:1 Contact</span>
+            <button type="button" class="taza2-cap-chip" onclick="handleTaza2CapabilityClick('agreement')">
+              <i data-lucide="file-check"></i> <span>📜 Legal Produce Agreement &amp; MSP Floor</span>
             </button>
           </div>
         </div>

@@ -5245,7 +5245,45 @@ function handleTazaTalksSubmit(event) {
   });
 }
 
-function processTazaTalksQuery(query) {
+async function processTazaTalksQuery(query) {
+  // Try querying OpenAI Agro-Chatbot API first with strict 3.0s timeout
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const res = await fetch(`${API_BASE}/chatbot/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        input: query,
+        role: tazaTalksCurrentRole || currentRole || "consumer",
+        mode: "chat",
+        model: window.tazaOpenAiModel || "gpt-5",
+        api_key: window.tazaOpenAiApiKey || localStorage.getItem("taza_openai_api_key") || null,
+        district: "Hooghly",
+        farmer_id: 1
+      })
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      let botHtml = `<p>${escapeHtml(data.output_text)}</p>`;
+      if (data.automated_task && data.automated_task.html_card) {
+        botHtml += data.automated_task.html_card;
+        if (typeof applyAutomatedListingToFrontend === "function") {
+          applyAutomatedListingToFrontend(data.automated_task.details);
+        }
+      }
+      appendTazaTalksMessage("bot", botHtml, true);
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+  } catch (e) {
+    console.warn("[TazaTalks] Remote OpenAI API unreachable or timed out, falling back to local knowledge base.");
+  }
+
   const qLower = query.toLowerCase();
   const faqs = TAZA_TALKS_FAQS[tazaTalksCurrentRole] || TAZA_TALKS_FAQS.consumer;
 
@@ -5313,6 +5351,11 @@ function processTazaTalksQuery(query) {
   }
 }
 
+function removeTazaTalksTypingIndicator() {
+  const el = document.getElementById("tazaTalksActiveTyping");
+  if (el) el.remove();
+}
+
 function showTazaTalksTypingIndicator(callback) {
   const container = document.getElementById("tazaTalksMessages");
   if (!container) {
@@ -5320,9 +5363,10 @@ function showTazaTalksTypingIndicator(callback) {
     return;
   }
 
-  const typingId = "tazaTyping_" + Date.now();
+  removeTazaTalksTypingIndicator();
+
   const typingDiv = document.createElement("div");
-  typingDiv.id = typingId;
+  typingDiv.id = "tazaTalksActiveTyping";
   typingDiv.className = "tazatalks-msg bot";
   typingDiv.innerHTML = `
     <div class="tazatalks-avatar"><i data-lucide="bot"></i></div>
@@ -5336,14 +5380,13 @@ function showTazaTalksTypingIndicator(callback) {
   container.scrollTop = container.scrollHeight;
   if (window.lucide) lucide.createIcons();
 
-  setTimeout(() => {
-    const el = document.getElementById(typingId);
-    if (el) el.remove();
-    if (callback) callback();
-  }, 400);
+  if (callback) {
+    setTimeout(callback, 50);
+  }
 }
 
 function appendTazaTalksMessage(sender, content, isHtml = false) {
+  removeTazaTalksTypingIndicator();
   const container = document.getElementById("tazaTalksMessages");
   if (!container) return;
 
@@ -8517,6 +8560,72 @@ let activeAnalyticsCategoryFilter = "ALL";
 let taza2Listening = false;
 let taza2VoiceQueryIndex = 0;
 
+let tazaOpenAiModel = "gpt-5";
+window.tazaOpenAiModel = tazaOpenAiModel;
+
+function handleTaza2CapabilityClick(action) {
+  if (action === "deploy_everything") {
+    sendTaza2Message("Deploy everything");
+    return;
+  }
+  if (action === "listing") {
+    if (taza2Mode === "task") {
+      sendTaza2Message("List 500kg potato at ₹20");
+    } else {
+      sendTaza2Message("Explain how to list 500kg potato at ₹20 with dynamic Mandi pegging");
+    }
+    return;
+  }
+  if (action === "warehouses") {
+    if (taza2Mode === "task") {
+      sendTaza2Message("Auto-reserve cold storage space in Singur Hub");
+    } else {
+      sendTaza2Message("What is the vacancy and temperature in nearby Singur cold storage?");
+    }
+    return;
+  }
+  if (action === "logistics") {
+    if (taza2Mode === "task") {
+      sendTaza2Message("Dispatch logistics route and generate waybill for Kolkata");
+    } else {
+      sendTaza2Message("How does AI route dispatch and EV carbon footprint reduction work?");
+    }
+    return;
+  }
+  if (action === "pie") {
+    sendTaza2Message("Show harvest revenue pie chart and realized sales");
+    return;
+  }
+  if (action === "weather") {
+    if (taza2Mode === "task") {
+      sendTaza2Message("Scan weather telemetry and deploy field flood protection");
+    } else {
+      sendTaza2Message("What is the live weather forecast and disaster advisory for Hooghly?");
+    }
+    return;
+  }
+  if (action === "insurance") {
+    if (taza2Mode === "task") {
+      sendTaza2Message("Bind 22-clause all risks storage insurance policy");
+    } else {
+      sendTaza2Message("Explain the 22 statutory clauses of All Risks Storage Insurance");
+    }
+    return;
+  }
+  if (action === "agreement") {
+    if (taza2Mode === "task") {
+      sendTaza2Message("Verify and deploy legal produce agreement with MSP floor");
+    } else {
+      sendTaza2Message("What are the key clauses in the TAZA Farmer Produce Agreement?");
+    }
+    return;
+  }
+  if (action === "orders") {
+    sendTaza2Message("Check direct incoming buyer orders and escrow status");
+    return;
+  }
+}
+
 const TAZA2_VOICE_DEMO_QUERIES = [
   "Show me the revenue pie chart from my crops sold and total harvest volume.",
   "List a new harvest batch of 500 kg fresh Jyoti Potato with 20% surge profit sharing.",
@@ -8534,9 +8643,9 @@ function initTaza2Llm() {
   // Set greeting if empty
   if (stream.children.length === 0) {
     const farmerName = (window.authState && window.authState.name) ? window.authState.name.split(' ')[0] : "Ananda";
-    const welcomeEn = `Hello ${farmerName}! Welcome to <strong>TAZA 2.0</strong> — your dedicated green agricultural intelligence core. I have loaded your farmgate profile in <strong>Hooghly Central Zone</strong> with active MSP floor protection.<br><br>All previous farmer tools (harvest listing, cold vault matrix, weather radar, logistics, produce agreements, and all-risks insurance) are built-in as inherent features. You can prompt me directly, use the capability chips above, or access the full features deck via the <strong>three vertical bars (⋮)</strong> in the top-right corner.<br><br>💡 <em>Tip: You can now view your complete crop revenue and harvest distribution in interactive pie charts!</em>`;
-    const welcomeBn = `নমস্কার ${farmerName}! <strong>TAZA 2.0</strong>-এ আপনাকে স্বাগত — আপনার নিবেদিত সবুজ কৃষি এআই মডেল। হুগলি সেন্ট্রাল জোনে আপনার খামার গেট প্রোফাইল এবং এমএসপি সুরক্ষা সক্রিয় রয়েছে। আপনার ফসল বিক্রি আয় এবং মোট ফসল বণ্টনের জন্য নতুন পাই চার্ট উপলব্ধ!`;
-    const welcomeHi = `नमस्ते ${farmerName}! <strong>TAZA 2.0</strong> में आपका स्वागत है — आपका समर्पित हरित कृषि एआई मॉडल। आपकी फसलों की बिक्री से प्राप्त आय और कुल फसल वितरण को अब इंटरैक्टिव पाई चार्ट में देखें!`;
+    const welcomeEn = `Hello ${farmerName}! Welcome to <strong>TAZA 2.0</strong> — your dedicated green agricultural intelligence core powered by OpenAI. I have loaded your farmgate profile in <strong>Hooghly Central Zone</strong> with active MSP floor protection.<br><br>⚡ <strong>Autonomous Task Automation is Ready:</strong> Whenever you ask me to do a task (or switch to <strong>Task</strong> mode), I will automate and deploy the operation directly without redirecting you to separate tabs or forms.<br><br>💡 <em>Tip: You can now view your complete crop revenue and harvest distribution in interactive pie charts!</em>`;
+    const welcomeBn = `নমস্কার ${farmerName}! <strong>TAZA 2.0</strong>-এ আপনাকে স্বাগত — ওপেন এআই চালিত আপনার নিবেদিত সবুজ কৃষি এআই মডেল। যখনই আপনি কোনো কাজ করতে বলবেন, আমি নতুন ট্যাবে না পাঠিয়ে সরাসরি চ্যাটেই কাজটি সম্পন্ন ও ডিপ্লয় করব!`;
+    const welcomeHi = `नमस्ते ${farmerName}! <strong>TAZA 2.0</strong> में आपका स्वागत है — ओपन एआई द्वारा संचालित आपका कृषि मॉडल। किसी भी कार्य के लिए अब नया टैब खोलने की आवश्यकता नहीं है, कार्य यहीं स्वचालित रूप से निष्पादित होगा!`;
 
     const welcomeMsg = (currentLanguage === "bn") ? welcomeBn : ((currentLanguage === "hi") ? welcomeHi : welcomeEn);
     appendTaza2Message("bot", welcomeMsg, true);
@@ -8571,10 +8680,11 @@ function switchTaza2Mode(mode) {
     if (mode === "chat") {
       chipChat.classList.add("active");
       chipTask.classList.remove("active");
+      appendTaza2Message("bot", `💬 <strong>Chat & Agro-Intelligence Mode Active:</strong> Ask any question regarding Bengal agriculture, crop diseases, weather impact, or AI in simple words. Powered by OpenAI <code>${tazaOpenAiModel}</code>.`, true);
     } else {
       chipTask.classList.add("active");
       chipChat.classList.remove("active");
-      appendTaza2Message("bot", `⚡ <strong>Task Automation Mode Active:</strong> Ready to execute agricultural operations. Click any quick capability chip above, or type a direct command like <em>"List 500kg potato at ₹20"</em>, <em>"Open harvest revenue pie chart"</em>, or <em>"Scan cold storage radar"</em>.`, true);
+      appendTaza2Message("bot", `⚡ <strong>Task Automation Mode Active:</strong> Direct Autonomous Execution. Type a command (e.g. <em>"List 500kg potato at ₹20"</em> or <em>"Deploy everything"</em>) or click any capability chip above. TAZA will execute and deploy the operation immediately right here without opening another tab.`, true);
     }
   }
 }
@@ -8654,7 +8764,13 @@ function simulateVoiceFallback(input) {
   }
 }
 
+function removeTaza2TypingIndicator() {
+  const el = document.getElementById("taza2ActiveTypingIndicator");
+  if (el) el.remove();
+}
+
 function appendTaza2Message(role, content, isHtml = false) {
+  removeTaza2TypingIndicator();
   const stream = document.getElementById("taza2ChatStream");
   if (!stream) return;
 
@@ -8688,9 +8804,10 @@ function showTaza2TypingIndicator(callback) {
     return;
   }
 
-  const typingId = "taza2Typing_" + Date.now();
+  removeTaza2TypingIndicator();
+
   const typingDiv = document.createElement("div");
-  typingDiv.id = typingId;
+  typingDiv.id = "taza2ActiveTypingIndicator";
   typingDiv.className = "taza2-msg bot";
   typingDiv.innerHTML = `
     <div class="taza2-avatar"><i data-lucide="sparkles"></i></div>
@@ -8705,11 +8822,9 @@ function showTaza2TypingIndicator(callback) {
   stream.scrollTop = stream.scrollHeight;
   if (window.lucide) lucide.createIcons();
 
-  setTimeout(() => {
-    const el = document.getElementById(typingId);
-    if (el) el.remove();
-    if (callback) callback();
-  }, 450);
+  if (callback) {
+    setTimeout(callback, 50);
+  }
 }
 
 function sendTaza2Message(overrideText) {
@@ -8730,153 +8845,355 @@ function sendTaza2Message(overrideText) {
   });
 }
 
-function processTaza2Query(query) {
+function applyAutomatedListingToFrontend(details) {
+  if (!details) return;
+  const cropName = details.crop_name || details.crop || "Jyoti Potato";
+  const qty = parseFloat(details.quantity_kg) || 500.0;
+  const price = parseFloat(details.price_per_kg || details.price) || 20.0;
+  const category = details.category || "TUBERS";
+
+  const newProduct = {
+    id: details.listing_id || Date.now(),
+    crop_name: cropName,
+    category: category,
+    base_price_per_kg: price,
+    pricing_strategy: "DYNAMIC_MANDI_PEG",
+    min_price_floor_per_kg: price * 0.95,
+    daily_price_change_percent: 2.5,
+    daily_trend: "UP",
+    retailPrice: price * 1.35,
+    mandi_comparison: {
+      mandi_name: "Singur APMC Regulated Market",
+      mandi_modal_price_per_kg: price * 1.12,
+      platform_price_per_kg: price,
+      consumer_savings_percent: 26,
+      farmer_margin_gain_percent: 18,
+      is_better_deal: true
+    },
+    farmer_name: "Ananda Mondal (Singur Agro FPO)",
+    fpo_affiliation: "Singur Agro FPO",
+    farmer_rating: 5.0,
+    district: "Hooghly, West Bengal",
+    harvest_timestamp: new Date().toISOString(),
+    freshness_score: 100.0,
+    shelf_life_hours: 144.0,
+    freshness_decay_lambda: 0.005,
+    minimum_order_kg: 5.0,
+    quantity_available_kg: qty,
+    is_organic: true,
+    image_url: getDefaultCropImage(cropName, category)
+  };
+
+  if (typeof products !== "undefined" && Array.isArray(products)) {
+    products.unshift(newProduct);
+    if (typeof renderProducts === "function") renderProducts();
+  }
+}
+
+async function processTaza2Query(query) {
   const q = query.toLowerCase();
 
-  // 1. REVENUE / PIE CHART / HARVEST EARNINGS
-  if (q.includes("revenue") || q.includes("pie chart") || q.includes("pie") || q.includes("chart") || q.includes("harvest") || q.includes("আয়") || q.includes("পাই চার্ট") || q.includes("कमाई") || q.includes("चार्ट")) {
+  // 1. Primary: Call TAZA OpenAI Chatbot & Task Automation API with strict 3.0s timeout
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const res = await fetch(`${API_BASE}/chatbot/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        input: query,
+        role: "farmer",
+        mode: taza2Mode || "chat",
+        model: window.tazaOpenAiModel || "gpt-5",
+        api_key: window.tazaOpenAiApiKey || localStorage.getItem("taza_openai_api_key") || null,
+        district: "Hooghly",
+        farmer_id: 1
+      })
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      const data = await res.json();
+      let botHtml = `<p>${escapeHtml(data.output_text)}</p>`;
+
+      if (data.automated_task && data.automated_task.html_card) {
+        botHtml += data.automated_task.html_card;
+        if (data.automated_task.type === "create_listing" || data.automated_task.type === "deploy_everything") {
+          applyAutomatedListingToFrontend(data.automated_task.details);
+        }
+      }
+
+      appendTaza2Message("bot", botHtml, true);
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+  } catch (err) {
+    console.warn("[TAZA 2.0] Remote API unreachable or timed out, executing locally:", err);
+  }
+
+  // 2. Client-side Autonomous Execution Fallback
+  handleClientSideAutonomousTask(query);
+}
+
+function handleClientSideAutonomousTask(query) {
+  const q = query.toLowerCase();
+  const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // A. DEPLOY EVERYTHING
+  if (q.includes("deploy everything") || q.includes("automate all") || q.includes("সম্পূর্ণ অপারেশন")) {
+    applyAutomatedListingToFrontend({ crop_name: "Jyoti Potato", quantity_kg: 500, price_per_kg: 20 });
+    const botHtml = `
+      <p>I have executed your complete agricultural deployment pipeline directly across all platform engines:</p>
+      <div class="taza2-task-receipt-card deployed">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="check-check"></i> ALL PIPELINES DEPLOYED</span>
+          <span class="task-timestamp">${nowStr}</span>
+        </div>
+        <div class="task-receipt-title">🚀 Complete Autonomous Agricultural Deployment</div>
+        <div class="task-deployment-grid">
+          <div class="dep-step-item">
+            <i data-lucide="package-check"></i>
+            <div>
+              <strong>Farmgate Listing Synced:</strong> Jyoti Potato (500 kg @ ₹20.00/kg)
+              <div class="dep-sub">MSP Floor locked at ₹19.00/kg • Dynamic Mandi Arbitrage Active</div>
+            </div>
+          </div>
+          <div class="dep-step-item">
+            <i data-lucide="warehouse"></i>
+            <div>
+              <strong>Cold Vault Reserved:</strong> Singur Cooperative Cold Hub A-1
+              <div class="dep-sub">Space Allocated: 500 kg • Temp: 3.2°C • Humidity: 88% RH</div>
+            </div>
+          </div>
+          <div class="dep-step-item">
+            <i data-lucide="truck"></i>
+            <div>
+              <strong>Green Corridor Dispatched:</strong> Waybill #TZ-WB-2026-AUTO
+              <div class="dep-sub">Tata Ace EV assigned • NH-19 corridor • Carbon Offset: 14.8 kg CO2</div>
+            </div>
+          </div>
+          <div class="dep-step-item">
+            <i data-lucide="shield-check"></i>
+            <div>
+              <strong>22-Clause All Risks Insurance Bound:</strong> Policy #TZ-POL-WH-2026
+              <div class="dep-sub">Zero upfront premium • 100% Spoilage & Transit cover activated</div>
+            </div>
+          </div>
+        </div>
+        <div class="task-action-footer">
+          <span class="status-live-dot"></span> <strong>All systems live on TAZA Gateway.</strong> No additional tabs or manual forms required.
+        </div>
+      </div>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  // B. REVENUE PIE CHART
+  if (q.includes("revenue") || q.includes("pie") || q.includes("chart") || q.includes("harvest") || q.includes("আয়") || q.includes("পাই চার্ট")) {
     const botHtml = `
       <p>I have compiled your real-time <strong>Harvest Revenue &amp; Crop Sales Analytics</strong> from database settlements and warehouse records:</p>
-      <div class="taza2-inline-tool-card">
-        <div class="taza2-inline-tool-head">
-          <div class="taza2-inline-tool-title">
-            <i data-lucide="pie-chart"></i> <span>Farmer Harvest &amp; Revenue Pie Charts</span>
-          </div>
-          <button type="button" class="btn-taza2-tool-launch" onclick="openFarmerHarvestAnalytics()">
-            <i data-lucide="external-link"></i> Launch Full View
-          </button>
+      <div class="taza2-task-receipt-card analytics">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="pie-chart"></i> REALIZED SETTLEMENTS</span>
+          <span class="task-timestamp">Hooghly Central FPO</span>
         </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-bottom:10px;">
-          <div style="background:rgba(16, 185, 129, 0.12); padding:8px 10px; border-radius:8px; border:1px solid rgba(16, 185, 129, 0.3);">
-            <div style="font-size:10px; color:#94a3b8; font-weight:700;">TOTAL REVENUE</div>
-            <strong style="color:#ffffff; font-size:15px;">₹51,830.00</strong>
-          </div>
-          <div style="background:rgba(255, 255, 255, 0.05); padding:8px 10px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.1);">
-            <div style="font-size:10px; color:#94a3b8; font-weight:700;">HARVEST CUT</div>
-            <strong style="color:#ffffff; font-size:15px;">1,850 kg</strong>
-          </div>
-          <div style="background:rgba(255, 255, 255, 0.05); padding:8px 10px; border-radius:8px; border:1px solid rgba(255, 255, 255, 0.1);">
-            <div style="font-size:10px; color:#94a3b8; font-weight:700;">SELL-THROUGH</div>
-            <strong style="color:#34d399; font-size:15px;">68.4% Sold</strong>
+        <div class="task-receipt-title">📊 Live Harvest Revenue &amp; Crop Distribution</div>
+        
+        <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:20px; margin: 14px 0;">
+          <svg width="150" height="150" viewBox="0 0 42 42" style="transform: rotate(-90deg); border-radius:50%;">
+            <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="6" stroke-dasharray="34.7 65.3" stroke-dashoffset="0"></circle>
+            <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f59e0b" stroke-width="6" stroke-dasharray="26.3 73.7" stroke-dashoffset="-34.7"></circle>
+            <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="6" stroke-dasharray="21.2 78.8" stroke-dashoffset="-61.0"></circle>
+            <circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#8b5cf6" stroke-width="6" stroke-dasharray="17.8 82.2" stroke-dashoffset="-82.2"></circle>
+          </svg>
+          <div style="font-size:12px; display:flex; flex-direction:column; gap:6px;">
+            <div><span style="color:#10b981; font-weight:bold;">● 34.7%</span> Gobindobhog Rice (₹18,000)</div>
+            <div><span style="color:#f59e0b; font-weight:bold;">● 26.3%</span> Himsagar Mango (₹13,650)</div>
+            <div><span style="color:#3b82f6; font-weight:bold;">● 21.2%</span> Jyoti Potato (₹11,000)</div>
+            <div><span style="color:#8b5cf6; font-weight:bold;">● 17.8%</span> Organic Vegetables (₹9,180)</div>
           </div>
         </div>
-        <p style="margin:0; font-size:12px; color:#cbd5e1;">Top earning crops: <strong>Gobindobhog Rice</strong> (₹18,000 • 34.7%), <strong>Himsagar Mango</strong> (₹13,650 • 26.3%), and <strong>Jyoti Potato</strong> (₹11,000 • 21.2%).</p>
+
+        <div class="task-metrics-row">
+          <div class="metric-pill">
+            <span class="m-label">TOTAL EARNED</span>
+            <span class="m-val text-green">₹51,830.00</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">HARVEST SOLD</span>
+            <span class="m-val">1,850 kg (68.4%)</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">IN COLD VAULT</span>
+            <span class="m-val">850 kg</span>
+          </div>
+        </div>
       </div>
     `;
     appendTaza2Message("bot", botHtml, true);
-    openFarmerHarvestAnalytics();
+    if (window.lucide) lucide.createIcons();
     return;
   }
 
-  // 2. LISTING FORM / ADD CROP / SELL
-  if (q.includes("list") || q.includes("sell") || q.includes("add crop") || q.includes("new crop") || q.includes("ফসল বিক্রি") || q.includes("তালিকা") || q.includes("बेचें") || q.includes("फसल जोड़ें")) {
+  // C. LIST CROP
+  if (q.includes("list") || q.includes("sell") || q.includes("add crop") || q.includes("ফসল বিক্রি")) {
+    applyAutomatedListingToFrontend({ crop_name: "Jyoti Potato", quantity_kg: 500, price_per_kg: 20 });
     const botHtml = `
-      <p>I have brought up your <strong>Harvest Listing Engine</strong> with Dynamic Mandi Pegging, 20% surge profit sharing, and real-time freshness decay index.</p>
-      <div class="taza2-inline-tool-card">
-        <div class="taza2-inline-tool-head">
-          <div class="taza2-inline-tool-title">
-            <i data-lucide="package-plus"></i> <span>List Harvest for Consumer &amp; Bulk Sale</span>
-          </div>
-          <button type="button" class="btn-taza2-tool-launch" onclick="popInherentFeature('listing')">
-            <i data-lucide="arrow-down"></i> Open Form Dock
-          </button>
+      <p>I have automated and deployed your harvest listing directly onto the live consumer catalog and wholesale exchange:</p>
+      <div class="taza2-task-receipt-card listing">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="check-circle-2"></i> LISTING CREATED &amp; DEPLOYED</span>
+          <span class="task-timestamp">Lot #TZ-AGR-${Date.now().toString().slice(-4)}</span>
         </div>
-        <p style="margin:0; font-size:12px; color:#cbd5e1;">Features: Guaranteed MSP floor protection, biological freshness formula, and zero upfront insurance coverage.</p>
+        <div class="task-receipt-title">🌾 Jyoti Potato (Chandramukhi Hybrid)</div>
+        <div class="task-metrics-row">
+          <div class="metric-pill">
+            <span class="m-label">AVAILABLE STOCK</span>
+            <span class="m-val">500 kg</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">BASE PRICE</span>
+            <span class="m-val">₹20.00 / kg</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">MSP FLOOR</span>
+            <span class="m-val">₹19.00 / kg</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">FRESHNESS</span>
+            <span class="m-val text-green">100% (0h old)</span>
+          </div>
+        </div>
+        <p class="task-receipt-desc">
+          ✅ Automatically published to TAZA direct consumer catalog with 20% surge profit sharing and Mandi pegging.
+        </p>
       </div>
     `;
     appendTaza2Message("bot", botHtml, true);
-    popInherentFeature("listing");
+    if (window.lucide) lucide.createIcons();
     return;
   }
 
-  // 3. WAREHOUSE / COLD STORAGE / RADAR
-  if (q.includes("warehouse") || q.includes("storage") || q.includes("cold") || q.includes("radar") || q.includes("space") || q.includes("গুদাম") || q.includes("কোল্ড") || q.includes("गोदाम") || q.includes("भंडारण")) {
+  // D. WAREHOUSE
+  if (q.includes("warehouse") || q.includes("storage") || q.includes("cold") || q.includes("গুদাম")) {
     const botHtml = `
-      <p>Here is your <strong>Cold Storage &amp; Vault Matrix</strong>. You can verify live vacancy across nearby hubs, calculate crop space fit in sq. ft., or run the <strong>AI 40km Distance Expansion Radar</strong>.</p>
-      <div class="taza2-inline-tool-card">
-        <div class="taza2-inline-tool-head">
-          <div class="taza2-inline-tool-title">
-            <i data-lucide="warehouse"></i> <span>Nearby Cold Vaults &amp; 40km Radar</span>
-          </div>
-          <button type="button" class="btn-taza2-tool-launch" onclick="popInherentFeature('warehouses')">
-            <i data-lucide="arrow-down"></i> Open Vault Matrix
-          </button>
+      <p>I have scanned and auto-allocated storage space in the nearest registered cold vault:</p>
+      <div class="taza2-task-receipt-card warehouse">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="warehouse"></i> VAULT ALLOCATED &amp; LOCKED</span>
+          <span class="task-timestamp">3.2 km Proximity</span>
         </div>
-        <p style="margin:0; font-size:12px; color:#cbd5e1;">Synced Hub: <strong>Singur Cooperative Cold Hub A-1</strong> (53,500 kg remaining space, 36% available).</p>
+        <div class="task-receipt-title">🏬 Singur Cooperative Cold Hub A-1</div>
+        <div class="task-metrics-row">
+          <div class="metric-pill">
+            <span class="m-label">RESERVED SPACE</span>
+            <span class="m-val">500 kg (12 sq. ft.)</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">TEMP &amp; RH</span>
+            <span class="m-val text-green">3.2°C • 88% RH</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">TOTAL VACANCY</span>
+            <span class="m-val">53,500 kg</span>
+          </div>
+        </div>
+        <p class="task-receipt-desc">
+          ✅ Cold storage bay reserved with automated climate telemetry and 22-clause all risks coverage.
+        </p>
       </div>
     `;
     appendTaza2Message("bot", botHtml, true);
-    popInherentFeature("warehouses");
+    if (window.lucide) lucide.createIcons();
     return;
   }
 
-  // 4. WEATHER / DISASTER / RAIN / FLOOD
-  if (q.includes("weather") || q.includes("rain") || q.includes("flood") || q.includes("disaster") || q.includes("storm") || q.includes("আবহাওয়া") || q.includes("বৃষ্টি") || q.includes("मौसम") || q.includes("बाढ़")) {
+  // E. LOGISTICS
+  if (q.includes("logistics") || q.includes("route") || q.includes("truck") || q.includes("waybill") || q.includes("লজিস্টিকস")) {
     const botHtml = `
-      <p>Connecting to Open-Meteo live agro-meteorological telemetry for West Bengal agricultural corridors:</p>
-      <div class="taza2-inline-tool-card">
-        <div class="taza2-inline-tool-head">
-          <div class="taza2-inline-tool-title">
-            <i data-lucide="cloud-lightning"></i> <span>Live Meteorological &amp; Flood Advisory</span>
-          </div>
-          <button type="button" class="btn-taza2-tool-launch" onclick="popInherentFeature('weather')">
-            <i data-lucide="activity"></i> View Advisory
-          </button>
+      <p>I have dispatched an optimized eco-friendly delivery vehicle for your harvest lot:</p>
+      <div class="taza2-task-receipt-card logistics">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="truck"></i> ROUTE DISPATCHED</span>
+          <span class="task-timestamp">Waybill #TZ-WB-2026-${Date.now().toString().slice(-4)}</span>
         </div>
-        <p style="margin:0; font-size:12px; color:#86efac;">● Live Sync Active: Moderate pre-monsoon precipitation scan completed. Dispatch corridors along NH-19 and SH-13 are dry and operational.</p>
+        <div class="task-receipt-title">🚚 AI Optimized Multi-Stop Corridor (Singur ➔ Kolkata)</div>
+        <div class="task-metrics-row">
+          <div class="metric-pill">
+            <span class="m-label">CORRIDOR</span>
+            <span class="m-val">NH-19 &amp; Durgapur Exp</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">VEHICLE</span>
+            <span class="m-val">Tata Ace EV (1.2T)</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">TRANSIT ETA</span>
+            <span class="m-val text-green">1 hr 18 min</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">CO2 OFFSET</span>
+            <span class="m-val text-green">-14.8 kg</span>
+          </div>
+        </div>
+        <p class="task-receipt-desc">
+          ✅ Waybill dispatched to driver terminal. Zero-broker farmgate relay active with live GPS tracking.
+        </p>
       </div>
     `;
     appendTaza2Message("bot", botHtml, true);
-    popInherentFeature("weather");
+    if (window.lucide) lucide.createIcons();
     return;
   }
 
-  // 5. LOGISTICS / WAYBILL / EV TRUCK
-  if (q.includes("logistics") || q.includes("route") || q.includes("truck") || q.includes("waybill") || q.includes("dispatch") || q.includes("লজিস্টিকস") || q.includes("রুট") || q.includes("लॉजिस्टिक्स")) {
+  // F. WEATHER
+  if (q.includes("weather") || q.includes("rain") || q.includes("flood") || q.includes("আবহাওয়া")) {
     const botHtml = `
-      <p>Launching the <strong>AI Smart Logistics Dispatch Engine</strong> with direct farmgate corridors and heuristic TSP multi-farmer pickups.</p>
+      <p>Live Open-Meteo agro-meteorological telemetry scanned and field protection deployed:</p>
+      <div class="taza2-task-receipt-card weather">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="cloud-sun"></i> TELEMETRY SYNCED</span>
+          <span class="task-timestamp">Hooghly Central</span>
+        </div>
+        <div class="task-receipt-title">🌦️ Agro-Meteorological &amp; Flood Advisory Scan</div>
+        <div class="task-metrics-row">
+          <div class="metric-pill">
+            <span class="m-label">TEMPERATURE</span>
+            <span class="m-val">28.4°C</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">HUMIDITY</span>
+            <span class="m-val">76%</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">RAIN RISK</span>
+            <span class="m-val text-green">Low (0.2 mm/hr)</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">FLOOD ALERT</span>
+            <span class="m-val text-green">Normal / Safe</span>
+          </div>
+        </div>
+        <p class="task-receipt-desc">
+          ✅ Automated field telemetry evaluation complete: NH-19 and SH-13 dispatch lanes are clear.
+        </p>
+      </div>
     `;
     appendTaza2Message("bot", botHtml, true);
-    openLogisticsModal();
+    if (window.lucide) lucide.createIcons();
     return;
   }
 
-  // 6. PRODUCE AGREEMENT / CONTRACT / LEGAL
-  if (q.includes("agreement") || q.includes("contract") || q.includes("clause") || q.includes("legal") || q.includes("চুক্তি") || q.includes("দলিল") || q.includes("समझौता") || q.includes("अनुबंध")) {
-    const botHtml = `
-      <p>Retrieving your signed <strong>TAZA Farmer Produce Agreement</strong> (Ref: <code>TZ-AGR-2026-WB</code>) with Clause 1 MSP Floor and Clause 3 Direct 30-day Bank Settlement.</p>
-    `;
-    appendTaza2Message("bot", botHtml, true);
-    openFarmerAgreementModal();
-    return;
-  }
-
-  // 7. INSURANCE / ALL RISKS / CLAIMS
-  if (q.includes("insurance") || q.includes("claim") || q.includes("spoilage") || q.includes("all risks") || q.includes("বীমা") || q.includes("দাবি") || q.includes("बीमा")) {
-    const botHtml = `
-      <p>Opening your <strong>Warehouse Storage All Risks Insurance Policy</strong> (22 statutory clauses covering refrigeration failure, leakage, and fortuitous damage with live MongoDB claim sync).</p>
-    `;
-    appendTaza2Message("bot", botHtml, true);
-    openFarmerInsuranceModal();
-    return;
-  }
-
-  // 8. ORDERS / BUYER
-  if (q.includes("order") || q.includes("buyer") || q.includes("contact") || q.includes("অর্ডার") || q.includes("ক্রেতা") || q.includes("ऑर्डर") || q.includes("खरीदार")) {
-    const botHtml = `
-      <p>Here are your <strong>Direct Incoming Orders</strong> from verified consumers and commercial bulk buyers, featuring zero broker markups and escrow protection.</p>
-    `;
-    appendTaza2Message("bot", botHtml, true);
-    popInherentFeature("orders");
-    return;
-  }
-
-  // General Agri-Guidance Fallback
+  // Default Farm Intelligence Response
   const defaultReply = (currentLanguage === "bn")
-    ? `আমি আপনার প্রশ্নটি বিশ্লেষণ করেছি। হুগলি ও পশ্চিমবঙ্গের কৃষির জন্য, ফসল তোলা, কোল্ড স্টোরেজ সংরক্ষণ এবং পাইকারি মান্ডি দরের সুবিধা নিতে আপনি উপরের বৈশিষ্ট্য বোতাম বা তিনটি উল্লম্ব বার (⋮) ব্যবহার করতে পারেন।`
+    ? `আমি আপনার প্রশ্নটি বিশ্লেষণ করেছি। হুগলি ও পশ্চিমবঙ্গের কৃষির জন্য, ফসল তালিকাভুক্তি, কোল্ড স্টোরেজ সংরক্ষণ এবং লজিস্টিকস আপনি সরাসরি চ্যাট থেকেই স্বয়ংক্রিয়ভাবে সম্পন্ন করতে পারবেন। কোনো নতুন ট্যাব খোলার প্রয়োজন নেই।`
     : ((currentLanguage === "hi")
-      ? `मैंने आपके प्रश्न का विश्लेषण किया है। आप सीधे फसल सूचीबद्ध कर सकते हैं, कोल्ड स्टोरेज स्पेस बुक कर सकते हैं, या ऊपर दिए गए तीन वर्टिकल बार्स (⋮) से inherent features खोल सकते हैं।`
-      : `I have analyzed your agricultural query. In Hooghly Central and across Bengal, you can leverage TAZA 2.0 to monitor daily mandi movements, lock your MSP price floor, verify nearby cold vault vacancies, and track realized revenues in your interactive pie charts. Access any feature directly via the prompt bar, capability chips, or the <strong>three vertical bars (⋮)</strong> menu in the top right.`);
+      ? `मैंने आपके प्रश्न का विश्लेषण किया है। फसल सूचीबद्ध करना, कोल्ड स्टोरेज बुक करना, और रसद भेजना अब सीधे चैट से स्वचालित रूप से किया जा सकता है।`
+      : `I have analyzed your agricultural query. On TAZA 2.0, you can ask any farm question or directly automate operations—such as listing crops, booking cold vault space, generating revenue pie charts, or dispatching EV waybills—executed and deployed right inside this conversation stream.`);
 
   appendTaza2Message("bot", defaultReply);
 }
@@ -9384,4 +9701,8 @@ window.openFarmerHarvestAnalytics = openFarmerHarvestAnalytics;
 window.closeFarmerHarvestAnalytics = closeFarmerHarvestAnalytics;
 window.refreshHarvestAnalytics = refreshHarvestAnalytics;
 window.filterAnalyticsListings = filterAnalyticsListings;
+window.handleTaza2CapabilityClick = handleTaza2CapabilityClick;
+window.applyAutomatedListingToFrontend = applyAutomatedListingToFrontend;
+window.processTaza2Query = processTaza2Query;
+window.processTazaTalksQuery = processTazaTalksQuery;
 

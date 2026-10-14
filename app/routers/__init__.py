@@ -12,6 +12,7 @@ from app.routers.analytics import router as analytics_router
 from app.routers.market_farmer import router as market_farmer_router
 from app.routers.warehouses import router as warehouses_router
 from app.routers.insurance import router as insurance_router
+from app.routers.chatbot import router as chatbot_router
 
 __all__ = [
     "auth_router",
@@ -28,5 +29,6 @@ __all__ = [
     "market_farmer_router",
     "warehouses_router",
     "insurance_router",
+    "chatbot_router",
 ]
 

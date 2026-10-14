@@ -21,6 +21,7 @@ from app.routers import (
     market_farmer_router,
     warehouses_router,
     insurance_router,
+    chatbot_router,
 )
 
 
@@ -85,6 +86,7 @@ app.include_router(analytics_router, prefix=settings.API_V1_STR)
 app.include_router(market_farmer_router, prefix=settings.API_V1_STR)
 app.include_router(warehouses_router, prefix=settings.API_V1_STR)
 app.include_router(insurance_router, prefix=settings.API_V1_STR)
+app.include_router(chatbot_router, prefix=settings.API_V1_STR)
 
 
 

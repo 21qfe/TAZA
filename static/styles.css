@@ -8236,6 +8236,215 @@ body.farmer-mode {
   background: rgba(255, 255, 255, 0.22);
 }
 
+/* ==========================================================================
+   TAZA 2.0 AUTONOMOUS TASK DEPLOYMENT CARDS & OPENAI INTEGRATION
+   ========================================================================== */
+
+.taza2-task-receipt-card {
+  margin-top: 12px;
+  background: linear-gradient(145deg, rgba(10, 28, 18, 0.98), rgba(16, 42, 28, 0.94));
+  border: 1.5px solid rgba(52, 211, 153, 0.45);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45), 0 0 16px rgba(16, 185, 129, 0.15);
+  animation: taskReceiptPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes taskReceiptPop {
+  0% { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.taza2-task-receipt-card.deployed {
+  border-color: #34d399;
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.25);
+}
+
+.task-receipt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.task-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.task-badge.success {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.task-timestamp {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.task-receipt-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.task-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.metric-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-pill .m-label {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.metric-pill .m-val {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-top: 2px;
+}
+
+.metric-pill .m-val.text-green {
+  color: #34d399;
+}
+
+.task-receipt-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.task-deployment-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.dep-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #f1f5f9;
+}
+
+.dep-step-item i {
+  color: #34d399;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dep-step-item .dep-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+.task-action-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #86efac;
+  border-top: 1px solid rgba(52, 211, 153, 0.2);
+  padding-top: 10px;
+}
+
+.status-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+  animation: taza2Pulse 1.2s infinite;
+}
+
+/* OpenAI Key Modal */
+.openai-key-dialog {
+  max-width: 520px;
+  background: #0f172a;
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  border-radius: 14px;
+  padding: 24px;
+  color: #ffffff;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.openai-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.openai-dialog-header i {
+  color: #34d399;
+}
+
+.openai-field-group {
+  margin-bottom: 14px;
+}
+
+.openai-field-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.openai-input {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.openai-input:focus {
+  outline: none;
+  border-color: #34d399;
+}
+
+.openai-btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
 
 
 
