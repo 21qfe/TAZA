@@ -468,7 +468,7 @@
       </div>
 
       <!-- AI Demand Forecasting & Regional Calamity Warnings -->
-      <div class="farmer-insights-strip">
+      <div class="farmer-insights-strip" id="farmerInsightsStrip">
         <div class="insight-card ai">
           <div class="insight-head">
             <i data-lucide="trending-up"></i>
@@ -508,7 +508,7 @@
             <p style="font-size: 13px; color: #64748b; margin: 0;">Verify cold vault vacancy and lock safe storage for your harvest before listing for sale.</p>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <button type="button" onclick="document.getElementById('cropName').focus()" style="background: #15803d; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <button type="button" onclick="popInherentFeature('listing')" style="background: #15803d; color: #ffffff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
               <i data-lucide="arrow-down-circle" style="width: 14px; height: 14px;"></i> Jump to Listing Form
             </button>
           </div>
@@ -621,7 +621,7 @@
               <span style="font-size: 12px; color: #64748b;">
                 💡 <em>Changing this batch size updates your harvest listing form in real-time.</em>
               </span>
-              <button type="button" onclick="document.getElementById('cropName').focus()" style="background: #166534; color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+              <button type="button" onclick="popInherentFeature('listing')" style="background: #166534; color: #ffffff; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
                 Apply to Listing Form &rarr;
               </button>
             </div>
@@ -674,9 +674,9 @@
       </div>
 
       <!-- Farmer Operational Panels -->
-      <div class="farmer-layout">
+      <div class="farmer-layout" id="farmerLayoutGrid">
         <!-- New Harvest Listing Form -->
-        <div class="panel-box">
+        <div class="panel-box" id="farmerListingPanelBox">
           <div class="panel-title">
             <i data-lucide="package-plus"></i>
             <h3 id="farmerFormTitle">List Harvest for Consumer &amp; Bulk Sale</h3>
@@ -1042,7 +1042,7 @@
         </div>
 
         <!-- Direct Orders & 1:1 Buyer Contacts -->
-        <div class="panel-box">
+        <div class="panel-box" id="farmerOrdersPanelBox">
           <div class="panel-title">
             <i data-lucide="clipboard-list"></i>
             <h3 id="farmerOrdersSectionTitle">Direct Incoming Orders (Zero Brokers)</h3>

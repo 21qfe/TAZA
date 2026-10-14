@@ -4986,7 +4986,15 @@ function closeLogisticsModal() {
 }
 
 function openMandiStatsModal() {
-  alert("📊 APMC Mandi Benchmark Engine:\n\nTAZA continuously scrapes Agmarknet West Bengal wholesale market prices across Singur, Memari, Nadia, and Malda.\n\nAll farmer payouts are 100% transparent with zero intermediary commission.");
+  if (typeof openPricingStrategyInfoModal === "function") {
+    openPricingStrategyInfoModal("ALL");
+  } else {
+    const modal = document.getElementById("modalPricingStrategyInfo");
+    if (modal) {
+      modal.style.display = "block";
+      document.body.style.overflow = "hidden";
+    }
+  }
 }
 
 function openProfileModal() {
@@ -9356,39 +9364,85 @@ function popInherentFeature(featureKey) {
   if (!dock) return;
 
   dock.classList.add("active");
+  dock.style.display = "block";
   if (controlBar) controlBar.style.display = "flex";
 
-  // Hide all panels, then reveal target
-  const panels = [
-    { key: "listing", el: document.getElementById("addCropForm")?.closest(".panel-box"), title: "Create New Harvest Listing (ফসল তালিকাভুক্তি)" },
-    { key: "warehouses", el: document.getElementById("warehouseFinderBanner"), title: "Cold Storage & Vault Matrix (গুদাম ও কোল্ড স্টোরেজ)" },
-    { key: "weather", el: document.getElementById("farmerInsightsStrip"), title: "Agro-Meteorological Advisory & Weather Scan" },
-    { key: "orders", el: document.getElementById("farmerIncomingOrdersList")?.closest(".panel-box"), title: "Direct Incoming Orders (সরাসরি ক্রেতা অর্ডার)" },
-    { key: "docs", el: document.getElementById("farmerDocsBanner"), title: "TAZA Farmer Produce Agreement & Documents" }
-  ];
+  const docsBanner = document.getElementById("farmerDocsBanner");
+  const weatherStrip = document.getElementById("farmerInsightsStrip");
+  const warehouseBanner = document.getElementById("warehouseFinderBanner");
+  const layoutGrid = document.getElementById("farmerLayoutGrid");
+  const listingBox = document.getElementById("farmerListingPanelBox");
+  const ordersBox = document.getElementById("farmerOrdersPanelBox");
 
-  panels.forEach(p => {
-    if (p.el) {
-      if (p.key === featureKey || featureKey === "all") {
-        p.el.style.display = "block";
-        if (dockTitle && p.key === featureKey) dockTitle.innerText = p.title;
-        setTimeout(() => {
-          p.el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      } else {
-        // Keep visible in dock container but styled cleanly
-        p.el.style.display = "block";
-      }
-    }
-  });
+  // 1. Isolate view: hide ALL panels first so they never render stacked together
+  if (docsBanner) docsBanner.style.display = "none";
+  if (weatherStrip) weatherStrip.style.display = "none";
+  if (warehouseBanner) warehouseBanner.style.display = "none";
+  if (layoutGrid) layoutGrid.style.display = "none";
+  if (listingBox) listingBox.style.display = "none";
+  if (ordersBox) ordersBox.style.display = "none";
 
+  // 2. Reveal ONLY the requested tool page
   if (featureKey === "listing") {
+    if (dockTitle) dockTitle.innerText = "Create New Harvest Listing (ফসল তালিকাভুক্তি)";
+    if (layoutGrid) {
+      layoutGrid.style.display = "block";
+      layoutGrid.style.gridTemplateColumns = "1fr";
+    }
+    if (listingBox) listingBox.style.display = "block";
     setTimeout(() => {
+      dock.scrollIntoView({ behavior: "smooth", block: "start" });
       const input = document.getElementById("cropName");
       if (input) input.focus();
-    }, 300);
-  } else if (featureKey === "weather" && typeof loadFarmerLiveWeather === "function") {
-    loadFarmerLiveWeather();
+    }, 120);
+  } else if (featureKey === "orders") {
+    if (dockTitle) dockTitle.innerText = "Direct Incoming Orders (সরাসরি ক্রেতা অর্ডার)";
+    if (layoutGrid) {
+      layoutGrid.style.display = "block";
+      layoutGrid.style.gridTemplateColumns = "1fr";
+    }
+    if (ordersBox) ordersBox.style.display = "block";
+    if (typeof loadFarmerDashboard === "function") loadFarmerDashboard();
+    setTimeout(() => {
+      dock.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  } else if (featureKey === "warehouses") {
+    if (dockTitle) dockTitle.innerText = "Cold Storage & Vault Matrix (গুদাম ও কোল্ড স্টোরেজ)";
+    if (warehouseBanner) warehouseBanner.style.display = "block";
+    if (typeof renderFarmerWarehouseCards === "function") {
+      const selectedWhDist = document.getElementById("whDistrictFilter")?.value || "Hooghly";
+      renderFarmerWarehouseCards(selectedWhDist);
+    }
+    setTimeout(() => {
+      dock.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  } else if (featureKey === "weather") {
+    if (dockTitle) dockTitle.innerText = "Live Disaster & Weather Advisory (আবহাওয়া ও দুর্যোগ সতর্কতা)";
+    if (weatherStrip) weatherStrip.style.display = "grid";
+    if (typeof loadFarmerLiveWeather === "function") loadFarmerLiveWeather();
+    setTimeout(() => {
+      dock.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  } else if (featureKey === "docs") {
+    if (dockTitle) dockTitle.innerText = "TAZA Farmer Produce Agreement & Documents (কৃষক চুক্তি ও নথি)";
+    if (docsBanner) docsBanner.style.display = "block";
+    setTimeout(() => {
+      dock.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  } else if (featureKey === "all") {
+    if (dockTitle) dockTitle.innerText = "Farmer Operations Suite (সকল ফিচার)";
+    if (docsBanner) docsBanner.style.display = "block";
+    if (weatherStrip) weatherStrip.style.display = "grid";
+    if (warehouseBanner) warehouseBanner.style.display = "block";
+    if (layoutGrid) {
+      layoutGrid.style.display = "grid";
+      layoutGrid.style.gridTemplateColumns = "";
+    }
+    if (listingBox) listingBox.style.display = "block";
+    if (ordersBox) ordersBox.style.display = "block";
+    setTimeout(() => {
+      dock.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
   }
 
   if (window.lucide) lucide.createIcons();
@@ -9397,12 +9451,28 @@ function popInherentFeature(featureKey) {
 function minimizeInherentDock() {
   const dock = document.getElementById("taza2InherentFeaturesWrapper");
   const controlBar = document.getElementById("dockControlBar");
-  if (dock) dock.classList.remove("active");
+  if (dock) {
+    dock.classList.remove("active");
+    dock.style.display = "none";
+  }
   if (controlBar) controlBar.style.display = "none";
+
+  const docsBanner = document.getElementById("farmerDocsBanner");
+  const weatherStrip = document.getElementById("farmerInsightsStrip");
+  const warehouseBanner = document.getElementById("warehouseFinderBanner");
+  const layoutGrid = document.getElementById("farmerLayoutGrid");
+  const listingBox = document.getElementById("farmerListingPanelBox");
+  const ordersBox = document.getElementById("farmerOrdersPanelBox");
+  if (docsBanner) docsBanner.style.display = "none";
+  if (weatherStrip) weatherStrip.style.display = "none";
+  if (warehouseBanner) warehouseBanner.style.display = "none";
+  if (layoutGrid) layoutGrid.style.display = "none";
+  if (listingBox) listingBox.style.display = "none";
+  if (ordersBox) ordersBox.style.display = "none";
 
   const hero = document.getElementById("taza2HeroStage");
   if (hero) hero.scrollIntoView({ behavior: "smooth", block: "start" });
-  focusTaza2Input();
+  if (typeof focusTaza2Input === "function") focusTaza2Input();
 }
 
 /* ==========================================================================
