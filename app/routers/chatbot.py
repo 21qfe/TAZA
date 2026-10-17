@@ -185,8 +185,15 @@ async def process_chat_message(
     is_logistics_task = any(k in q_lower for k in ["dispatch route", "generate waybill", "send truck", "dispatch ev", "লজিস্টিকস পাঠান"])
     is_revenue_chart = any(k in q_lower for k in ["revenue pie chart", "pie chart", "show revenue", "পাই চার্ট", "আয় চার্ট"])
     is_weather_task = any(k in q_lower for k in ["scan weather", "protect crops", "telemetry scan", "আবহাওয়া স্ক্যান"])
+    is_docs_query = any(k in q_lower for k in [
+        "document", "documents", "doc", "docs", "receipt", "receipts", "transit pass",
+        "waybill pass", "gate pass", "certificate", "certificates", "দলিল", "নথি", "রসিদ", "কাগজ"
+    ]) or (
+        any(k in q_lower for k in ["see", "view", "show", "open", "where", "access", "find", "দেখব", "খুঁজে"]) and
+        any(k in q_lower for k in ["pass", "papers", "paper", "record", "records", "vault", "warehouse", "insurance", "agreement"])
+    )
 
-    is_task_request = (mode == "task") or is_listing or is_deploy or is_warehouse_task or is_logistics_task or is_revenue_chart or is_weather_task
+    is_task_request = (mode == "task") or is_listing or is_deploy or is_warehouse_task or is_logistics_task or is_revenue_chart or is_weather_task or is_docs_query
 
     ai_text = ""
     model_used = payload.model or "TAZA-Qwen2.5-0.5B-LoRA (IBM Z LinuxONE s390x)"
@@ -477,6 +484,59 @@ async def execute_autonomous_farm_task(
             html_card=card_html
         )
 
+    # TASK: DOCUMENTS & WAREHOUSE RECEIPTS VAULT
+    is_doc_task = any(k in q_lower for k in [
+        "document", "documents", "doc", "docs", "receipt", "receipts",
+        "transit pass", "gate pass", "certificate", "দলিল", "নথি", "রসিদ", "কাগজ"
+    ]) or (
+        any(k in q_lower for k in ["see", "view", "show", "open", "where", "access", "দেখব", "খুঁজে"]) and
+        any(k in q_lower for k in ["paper", "record", "records", "vault", "warehouse", "pass", "insurance", "agreement"])
+    )
+    if is_doc_task:
+        card_html = f"""
+        <div class="taza2-task-receipt-card warehouse">
+          <div class="task-receipt-header">
+            <span class="task-badge success"><i data-lucide="folder-check"></i> VAULT ENCRYPTED &amp; ACTIVE</span>
+            <span class="task-timestamp">Singur Hub Repository</span>
+          </div>
+          <div class="task-receipt-title">📁 Farmer Legal Documents &amp; Warehouse Records</div>
+          <div class="task-metrics-row">
+            <div class="metric-pill">
+              <span class="m-label">WAREHOUSE PASS</span>
+              <span class="m-val text-green">#TZ-WH-PASS-8841</span>
+            </div>
+            <div class="metric-pill">
+              <span class="m-label">ALL RISKS INSURANCE</span>
+              <span class="m-val text-green">#TZ-POL-WH-2026</span>
+            </div>
+            <div class="metric-pill">
+              <span class="m-label">PRODUCE CONTRACT</span>
+              <span class="m-val text-green">#TZ-AGR-2026-WB</span>
+            </div>
+          </div>
+          <p class="task-receipt-desc">
+            All agricultural contracts, cold storage weighment passes, and MSP guarantees are digitally signed and available in your secure vault.
+          </p>
+          <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <button type="button" class="btn-create-harvest-listing" onclick="openFarmerProfileModal('documents')" style="background: #10b981; color: #064e3b; font-weight: 700; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;">
+              <i data-lucide="folder-open" style="width: 14px; height: 14px;"></i> Open Documents Vault
+            </button>
+            <button type="button" onclick="openFarmerInsuranceModal()" style="background: rgba(16, 185, 129, 0.15); color: #86efac; border: 1px solid rgba(52, 211, 153, 0.4); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;">
+              <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Warehouse Insurance Policy
+            </button>
+          </div>
+        </div>
+        """
+        return AutomatedTaskResult(
+            type="view_documents",
+            title="Farmer Documents Vault",
+            executed=True,
+            deployed=True,
+            timestamp=now_utc.isoformat(),
+            details={"status": "available", "total_docs": 3},
+            html_card=card_html
+        )
+
     # TASK C: WAREHOUSE / COLD STORAGE RESERVATION
     if "warehouse" in q_lower or "storage" in q_lower or "cold" in q_lower or "গুদাম" in q_lower or "radar" in q_lower:
         nearest_wh = warehouse_service.find_nearest_warehouse(lat=22.8124, lng=88.2312)
@@ -741,6 +801,26 @@ def generate_expert_farm_response(query: str, role: str, mode: str, district: st
             "• **Escrow Fund Lock**: When a buyer places an order, 100% of the funds are locked in an escrow account before pickup dispatch.\n"
             "• **Instant Settlement**: Once the digital waybill is signed at gate arrival, payment is released directly to the farmer's bank account.\n"
             "• **1:1 Masked Relay**: Buyer-farmer communications are routed through an encrypted in-app relay to prevent broker harassment and protect your privacy."
+        )
+
+    # 5b. Farmer Documents Vault, Warehouse Passes & Legal Certificates
+    is_doc_keyword = any(k in q for k in [
+        "document", "documents", "doc", "docs", "receipt", "receipts",
+        "transit pass", "waybill pass", "gate pass", "certificate", "certificates",
+        "দলিল", "নথি", "রসিদ", "কাগজ", "কাগজপত্র"
+    ]) or (
+        any(k in q for k in ["see", "view", "show", "open", "where", "access", "find", "দেখব", "খুঁজে", "কোথায়"]) and
+        any(k in q for k in ["pass", "papers", "paper", "record", "records", "file", "files", "vault", "warehouse", "insurance", "agreement"])
+    )
+    if is_doc_keyword:
+        return (
+            "**Accessing Your Warehouse Documents & Legal Certificates:**\n\n"
+            "All your official warehouse passes, storage receipts, and legal protections are stored securely in your encrypted **Farmer Documents Vault**:\n\n"
+            "1. **Direct Vault Access**: Tap **'Farmer Documents Vault'** in the top navigation bar, or click your profile avatar at any time to open the full repository.\n\n"
+            "2. **Warehouse Storage & Weighment Transit Pass** (`#TZ-WH-PASS-8841`): Displays your registered lot numbers, Singur Hub A-1 cold storage bay allocation, gross/net weighment records, and digital entry QR passes.\n\n"
+            "3. **22-Clause All Risks Insurance Policy** (`#TZ-POL-WH-2026-0884`): Statutory zero-deductible coverage against power cuts, chilling injuries, and warehouse transit damage (with direct claim tracking).\n\n"
+            "4. **Farmer Produce Agreement** (`#TZ-AGR-2026-WB`): Trilingual legally binding contract safeguarding your MSP floor price and guaranteeing 30-day electronic bank payouts.\n\n"
+            "You can open the Documents Vault directly using the action button below:"
         )
 
     # 6. Cold Storage Space Fit Calculator & 40km Distance Radar

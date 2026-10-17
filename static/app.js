@@ -9208,6 +9208,48 @@ function handleClientSideAutonomousTask(query) {
     return;
   }
 
+  // DOCUMENTS VAULT & WAREHOUSE RECORDS
+  if (q.includes("document") || q.includes("doc") || q.includes("receipt") || q.includes("pass") || q.includes("দলিল") || q.includes("নথি") || q.includes("রসিদ") || q.includes("কাগজ") || (q.includes("see") && q.includes("warehouse")) || (q.includes("view") && q.includes("warehouse"))) {
+    const botHtml = `
+      <p>All your official warehouse passes, cold storage deposit receipts, and insurance policies are stored in your <strong>Farmer Documents Vault</strong>:</p>
+      <div class="taza2-task-receipt-card warehouse">
+        <div class="task-receipt-header">
+          <span class="task-badge success"><i data-lucide="folder-check"></i> VAULT ENCRYPTED &amp; ACTIVE</span>
+          <span class="task-timestamp">Singur Hub Repository</span>
+        </div>
+        <div class="task-receipt-title">📁 Farmer Legal Documents &amp; Warehouse Records</div>
+        <div class="task-metrics-row">
+          <div class="metric-pill">
+            <span class="m-label">WAREHOUSE PASS</span>
+            <span class="m-val text-green">#TZ-WH-PASS-8841</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">ALL RISKS INSURANCE</span>
+            <span class="m-val text-green">#TZ-POL-WH-2026</span>
+          </div>
+          <div class="metric-pill">
+            <span class="m-label">PRODUCE CONTRACT</span>
+            <span class="m-val text-green">#TZ-AGR-2026-WB</span>
+          </div>
+        </div>
+        <p class="task-receipt-desc">
+          Your Singur Hub cold storage weighment receipts, MSP guarantee agreement, and statutory 22-clause spoilage insurance policy are fully accessible.
+        </p>
+        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <button type="button" class="btn-create-harvest-listing" onclick="openFarmerProfileModal('documents')" style="background: #10b981; color: #064e3b; font-weight: 700; border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;">
+            <i data-lucide="folder-open" style="width: 14px; height: 14px;"></i> Open Documents Vault
+          </button>
+          <button type="button" onclick="openFarmerInsuranceModal()" style="background: rgba(16, 185, 129, 0.15); color: #86efac; border: 1px solid rgba(52, 211, 153, 0.4); border-radius: 6px; padding: 7px 12px; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 5px;">
+            <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Warehouse Insurance Policy
+          </button>
+        </div>
+      </div>
+    `;
+    appendTaza2Message("bot", botHtml, true);
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
   // D. WAREHOUSE
   if (q.includes("warehouse") || q.includes("storage") || q.includes("cold") || q.includes("গুদাম")) {
     const botHtml = `
