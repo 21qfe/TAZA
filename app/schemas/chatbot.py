@@ -6,8 +6,8 @@ class ChatbotMessageRequest(BaseModel):
     input: str = Field(..., description="User query or task command")
     role: str = Field("farmer", description="Active user role: 'farmer' or 'consumer'")
     mode: str = Field("chat", description="Active mode: 'chat' or 'task'")
-    model: str = Field("gpt-5", description="OpenAI model: default 'gpt-5'")
-    api_key: Optional[str] = Field(None, description="Optional custom OpenAI API Key")
+    model: str = Field("TAZA-Qwen2.5-0.5B-LoRA (IBM Z LinuxONE s390x)", description="Active AI model: default TAZA LinuxONE")
+    api_key: Optional[str] = Field(None, description="Optional custom API Key")
     district: Optional[str] = Field("Hooghly", description="Target agricultural district")
     farmer_id: Optional[int] = Field(1, description="Active farmer ID for database operations")
 

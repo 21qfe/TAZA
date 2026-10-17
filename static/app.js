@@ -2326,7 +2326,8 @@ function filterCategory(category, element) {
     document.querySelectorAll(".category-pill").forEach(p => p.classList.remove("active"));
     element.classList.add("active");
   }
-  document.getElementById("searchCategory").value = category;
+  const searchCatEl = document.getElementById("searchCategory");
+  if (searchCatEl) searchCatEl.value = category;
   fetchCatalog();
 }
 
@@ -2340,7 +2341,8 @@ function handleSearchInput(query) {
 }
 
 function triggerSearch() {
-  const val = document.getElementById("globalSearchInput").value;
+  const searchInp = document.getElementById("globalSearchInput");
+  const val = searchInp ? searchInp.value : '';
   currentSearchQuery = val;
   fetchCatalog();
 }
@@ -3401,22 +3403,74 @@ window.setHarvestTimePreset = setHarvestTimePreset;
 window.updateListingFreshnessPreview = updateListingFreshnessPreview;
 window.initHarvestTimestampField = initHarvestTimestampField;
 
-function quickSelectCrop(cropName, category, district, price) {
-  const nameEl = document.getElementById("cropName");
-  const catEl = document.getElementById("cropCategory");
-  const distEl = document.getElementById("cropDistrict");
-  const priceEl = document.getElementById("cropPrice");
+function onFarmerCropDropdownChange(cropVal) {
+  const cropSelect = document.getElementById("cropName");
+  if (cropSelect && cropSelect.value !== cropVal) cropSelect.value = cropVal;
 
-  if (nameEl) nameEl.value = cropName;
-  if (catEl) catEl.value = category;
-  if (distEl) distEl.value = district;
-  if (priceEl) {
-    priceEl.value = price.toFixed(2);
-    priceEl.placeholder = price.toFixed(2);
+  const mlCrop = document.getElementById("mlPredCrop");
+  if (mlCrop) mlCrop.value = cropVal;
+
+  // Auto-sync category
+  const catEl = document.getElementById("cropCategory");
+  if (catEl) {
+    if (["Rice", "Wheat", "Maize", "Barley", "Lentil"].includes(cropVal)) {
+      catEl.value = "GRAINS_PADDY";
+    } else if (["Mustard", "Soybean", "Cotton"].includes(cropVal)) {
+      catEl.value = "SPICES";
+    }
   }
-  isPriceManuallyEdited = false;
-  updateLiveMandiBenchmark(false);
-  updateListingFreshnessPreview();
+
+  // Update chip active states
+  const chips = document.querySelectorAll(".crop-quick-chips .crop-chip");
+  chips.forEach(chip => {
+    if (chip.getAttribute("data-crop") === cropVal) {
+      chip.classList.add("active");
+      chip.style.borderColor = "#10b981";
+      chip.style.background = "#ecfdf5";
+      chip.style.color = "#047857";
+      chip.style.fontWeight = "700";
+    } else {
+      chip.classList.remove("active");
+      chip.style.borderColor = "#cbd5e1";
+      chip.style.background = "#f8fafc";
+      chip.style.color = "#475569";
+      chip.style.fontWeight = "600";
+    }
+  });
+
+  // Automatically trigger ML Price prediction and apply to form
+  if (typeof runMlCropPricePrediction === "function") {
+    runMlCropPricePrediction().then(() => {
+      if (typeof applyMlPredictionToListingForm === "function") {
+        applyMlPredictionToListingForm();
+      }
+    });
+  }
+}
+
+function quickSelectModelCrop(cropVal) {
+  onFarmerCropDropdownChange(cropVal);
+}
+
+window.onFarmerCropDropdownChange = onFarmerCropDropdownChange;
+window.quickSelectModelCrop = quickSelectModelCrop;
+
+function quickSelectCrop(cropName, category, district, price) {
+  let mappedCrop = "Rice";
+  const lower = (cropName || "").toLowerCase();
+  if (lower.includes("wheat") || lower.includes("gehu")) mappedCrop = "Wheat";
+  else if (lower.includes("maize") || lower.includes("corn")) mappedCrop = "Maize";
+  else if (lower.includes("lentil") || lower.includes("dal") || lower.includes("masoor")) mappedCrop = "Lentil";
+  else if (lower.includes("mustard") || lower.includes("sarso")) mappedCrop = "Mustard";
+  else if (lower.includes("soybean") || lower.includes("soya")) mappedCrop = "Soybean";
+  else if (lower.includes("barley") || lower.includes("jau")) mappedCrop = "Barley";
+  else if (lower.includes("cotton") || lower.includes("kapas")) mappedCrop = "Cotton";
+  else mappedCrop = "Rice";
+
+  onFarmerCropDropdownChange(mappedCrop);
+
+  const distEl = document.getElementById("cropDistrict");
+  if (distEl && district) distEl.value = district;
 }
 
 function setupMandiBenchmarkListeners() {
@@ -3555,20 +3609,26 @@ async function updateLiveMandiBenchmark(isUserPriceEdit = false) {
 
   const farmerPrice = parseFloat(priceInput ? priceInput.value : "0") || modalPrice;
 
-  document.getElementById("liveMandiModalPrice").innerText = `₹${modalPrice.toFixed(2)}/kg`;
-  document.getElementById("liveEstimatedRetailPrice").innerText = `₹${retailPrice.toFixed(2)}/kg`;
-  document.getElementById("liveMandiName").innerText = benchmark.mandi_name || `${district} Mandi APMC`;
+  const elModal = document.getElementById("liveMandiModalPrice");
+  if (elModal) elModal.innerText = `₹${modalPrice.toFixed(2)}/kg`;
+  const elRetail = document.getElementById("liveEstimatedRetailPrice");
+  if (elRetail) elRetail.innerText = `₹${retailPrice.toFixed(2)}/kg`;
+  const elMandi = document.getElementById("liveMandiName");
+  if (elMandi) elMandi.innerText = benchmark.mandi_name || `${district} Mandi APMC`;
+
+  const elGain = document.getElementById("liveFarmerGainBadge");
+  const elSavings = document.getElementById("liveConsumerSavingsText");
 
   if (farmerPrice > 0) {
     const rawGatePrice = modalPrice * 0.88;
     const farmerGainPercent = Math.max(0, Math.round(((farmerPrice - rawGatePrice) / modalPrice) * 100));
     const consumerSavingsPercent = Math.max(0, Math.round(((retailPrice - farmerPrice) / retailPrice) * 100));
 
-    document.getElementById("liveFarmerGainBadge").innerText = `+${farmerGainPercent}% Direct Net`;
-    document.getElementById("liveConsumerSavingsText").innerText = `Consumer saves ${consumerSavingsPercent}% vs street retail (₹${retailPrice.toFixed(2)})`;
+    if (elGain) elGain.innerText = `+${farmerGainPercent}% Direct Net`;
+    if (elSavings) elSavings.innerText = `Consumer saves ${consumerSavingsPercent}% vs street retail (₹${retailPrice.toFixed(2)})`;
   } else {
-    document.getElementById("liveFarmerGainBadge").innerText = "Dynamic Price Active";
-    document.getElementById("liveConsumerSavingsText").innerText = `Street retail benchmark: ₹${retailPrice.toFixed(2)}/kg`;
+    if (elGain) elGain.innerText = "Dynamic Price Active";
+    if (elSavings) elSavings.innerText = `Street retail benchmark: ₹${retailPrice.toFixed(2)}/kg`;
   }
 
   updateDynamicPricingPreview();
@@ -8568,7 +8628,7 @@ let activeAnalyticsCategoryFilter = "ALL";
 let taza2Listening = false;
 let taza2VoiceQueryIndex = 0;
 
-let tazaOpenAiModel = "gpt-5";
+let tazaOpenAiModel = "TAZA-Qwen2.5-0.5B-LoRA (IBM Z LinuxONE s390x)";
 window.tazaOpenAiModel = tazaOpenAiModel;
 
 function handleTaza2CapabilityClick(action) {
@@ -8688,7 +8748,7 @@ function switchTaza2Mode(mode) {
     if (mode === "chat") {
       chipChat.classList.add("active");
       chipTask.classList.remove("active");
-      appendTaza2Message("bot", `💬 <strong>Chat & Agro-Intelligence Mode Active:</strong> Ask any question regarding Bengal agriculture, crop diseases, weather impact, or AI in simple words. Powered by OpenAI <code>${tazaOpenAiModel}</code>.`, true);
+      appendTaza2Message("bot", `💬 <strong>Chat & Agro-Intelligence Mode Active:</strong> Ask any question regarding Bengal agriculture, crop diseases, weather impact, or AI in simple words. Powered by <code>${tazaOpenAiModel}</code>.`, true);
     } else {
       chipTask.classList.add("active");
       chipChat.classList.remove("active");
@@ -8924,10 +8984,10 @@ function applyAutomatedListingToFrontend(details) {
 async function processTaza2Query(query) {
   const q = query.toLowerCase();
 
-  // 1. Primary: Call TAZA OpenAI Chatbot & Task Automation API with strict 3.0s timeout
+  // 1. Primary: Call TAZA AI Chatbot & Task Automation API (IBM Z LinuxONE fine-tuned)
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     const res = await fetch(`${API_BASE}/chatbot/chat`, {
       method: "POST",
@@ -8937,7 +8997,7 @@ async function processTaza2Query(query) {
         input: query,
         role: "farmer",
         mode: taza2Mode || "chat",
-        model: window.tazaOpenAiModel || "gpt-5",
+        model: window.tazaOpenAiModel || "TAZA-Qwen2.5-0.5B-LoRA (IBM Z LinuxONE s390x)",
         api_key: window.tazaOpenAiApiKey || localStorage.getItem("taza_openai_api_key") || null,
         district: "Hooghly",
         farmer_id: 1
@@ -9241,6 +9301,18 @@ function handleClientSideAutonomousTask(query) {
   // H. WHO ARE YOU / CAPABILITIES
   if (q.includes("who are you") || q.includes("what can you do") || q.includes("help") || q.includes("তুমি কে") || q.includes("তোমার কাজ কি")) {
     appendTaza2Message("bot", `I am <strong>TAZA Agro-Copilot</strong>, an independent agricultural AI platform purpose-built for farmers, FPOs, and direct farmgate-to-consumer trade in West Bengal.<br><br>• <strong>Direct Workflow Automation:</strong> Tell me <em>"List 500kg potato at ₹20"</em> or <em>"Deploy everything"</em>, and I will create the live marketplace listing, lock in your MSP floor price, and sync warehouse records right in this chat.<br>• <strong>Agronomic Advisory:</strong> Detailed diagnosis and treatment schedules for late blight, stem borer, fruit borers, and wilt diseases across Potato, Rice, Brinjal, and Vegetables.<br>• <strong>Mandi Price Intelligence:</strong> Live APMC comparisons for Singur, Champadanga, and Burdwan to help you capture 20%–35% higher profits without middleman commission deductions.<br>• <strong>Cold Storage & Logistics:</strong> Instant space allocation at Singur Hub A-1 and automated EV delivery waybills on NH-19.`, true);
+    return;
+  }
+
+  // CONTACT & HELPLINE PRIVACY (Farmer Privacy Protection - Zero fake phone numbers)
+  if (q.includes("contact") || q.includes("phone") || q.includes("helpline") || q.includes("call") || q.includes("number") || q.includes("mobile") || q.includes("support") || q.includes("যোগাযোগ") || q.includes("ফোন")) {
+    appendTaza2Message("bot", `For customer assistance and farmer trade support, please use the in-app <strong>TAZA Live Chat</strong> (tap the chat icon on the bottom right) or visit the <strong>TAZA Kisan Mitra desk</strong> at your nearest Singur FPO center. To protect farmer privacy, TAZA operates an encrypted 1:1 masked contact relay, so personal phone numbers are never shared publicly.`, true);
+    return;
+  }
+
+  // MANDI ARBITRAGE & SURGE SIMULATOR
+  if (q.includes("surge") || q.includes("arbitrage") || q.includes("simulator")) {
+    appendTaza2Message("bot", `<strong>TAZA Mandi Benchmark & 20% Surge Profit Simulator:</strong><br><br>• <strong>Live APMC Benchmarking:</strong> Continuous tracking of Singur, Champadanga, and Burdwan APMC modal prices.<br>• <strong>20% Surge Profit Simulator:</strong> Holding produce in certified cold storage until peak demand captures +20% to +35% higher profits.<br>• <strong>Zero Deductions:</strong> Direct buyer escrow settlement with 0% middleman commission.`, true);
     return;
   }
 
@@ -9889,4 +9961,107 @@ window.handleTaza2CapabilityClick = handleTaza2CapabilityClick;
 window.applyAutomatedListingToFrontend = applyAutomatedListingToFrontend;
 window.processTaza2Query = processTaza2Query;
 window.processTazaTalksQuery = processTazaTalksQuery;
+
+// =========================================================================
+// ML CROP PRICE PREDICTOR INTEGRATION (mdeol1.pkl / crop_price_model.pkl)
+// =========================================================================
+let latestMlPricePrediction = {
+  min_price: 4608.89,
+  max_price: 5002.86,
+  selling_price: 4805.88,
+  min_price_per_kg: 46.09,
+  max_price_per_kg: 50.03,
+  selling_price_per_kg: 48.06
+};
+
+async function runMlCropPricePrediction() {
+  const cropEl = document.getElementById("mlPredCrop");
+  const marketEl = document.getElementById("mlPredMarket");
+  const marketTypeEl = document.getElementById("mlPredMarketType");
+  const gradeEl = document.getElementById("mlPredQualityGrade");
+  const seasonEl = document.getElementById("mlPredSeason");
+  const stockEl = document.getElementById("mlPredStock");
+
+  if (!cropEl || !marketEl) return null;
+
+  const selectedOpt = marketEl.options[marketEl.selectedIndex];
+  const division = (selectedOpt && selectedOpt.getAttribute("data-division")) || "Presidency";
+  const district = (selectedOpt && selectedOpt.getAttribute("data-district")) || "Hooghly";
+  const market = marketEl.value || "Chinsurah Market";
+  const market_type = (marketTypeEl && marketTypeEl.value) || "Wholesale";
+  const crop = cropEl.value || "Rice";
+  const quality_grade = (gradeEl && gradeEl.value) || "Grade A";
+  const season = (seasonEl && seasonEl.value) || "Winter";
+  const stock_availability = (stockEl && stockEl.value) || "Medium";
+
+  try {
+    const res = await fetch(`${API_BASE}/farmers/predict-price`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        division,
+        district,
+        market,
+        market_type,
+        crop,
+        quality_grade,
+        season,
+        stock_availability
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      latestMlPricePrediction = data;
+
+      const minQEl = document.getElementById("mlValMinPriceQ");
+      const minKgEl = document.getElementById("mlValMinPriceKg");
+      const maxQEl = document.getElementById("mlValMaxPriceQ");
+      const maxKgEl = document.getElementById("mlValMaxPriceKg");
+      const sellQEl = document.getElementById("mlValSellingPriceQ");
+      const sellKgEl = document.getElementById("mlValSellingPriceKg");
+      const noteEl = document.getElementById("mlPredContextNote");
+
+      if (minQEl) minQEl.textContent = `₹${Number(data.min_price).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / Qtl`;
+      if (minKgEl) minKgEl.textContent = `₹${Number(data.min_price_per_kg).toFixed(2)} / kg`;
+      if (maxQEl) maxQEl.textContent = `₹${Number(data.max_price).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / Qtl`;
+      if (maxKgEl) maxKgEl.textContent = `₹${Number(data.max_price_per_kg).toFixed(2)} / kg`;
+      if (sellQEl) sellQEl.textContent = `₹${Number(data.selling_price).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / Qtl`;
+      if (sellKgEl) sellKgEl.textContent = `₹${Number(data.selling_price_per_kg).toFixed(2)} / kg`;
+
+      if (noteEl && data.historical_context) {
+        const hc = data.historical_context;
+        noteEl.innerHTML = `📊 Historical Avg: <strong>₹${Number(hc.hist_avg_price_quintal).toLocaleString("en-IN", { minimumFractionDigits: 2 })}/Qtl</strong> • Demand: <strong>${hc.market_demand}</strong> • Weather: <strong>${hc.typical_weather}</strong>`;
+      }
+      return data;
+    }
+  } catch (err) {
+    console.warn("[ML Price Predictor] Fallback to cached prediction:", err);
+  }
+  return latestMlPricePrediction;
+}
+
+function applyMlPredictionToListingForm() {
+  if (!latestMlPricePrediction) return;
+  const priceInput = document.getElementById("cropPrice");
+  const floorInput = document.getElementById("cropMinPriceFloor");
+  const cropNameInput = document.getElementById("cropName");
+  const mlCropEl = document.getElementById("mlPredCrop");
+
+  if (priceInput) {
+    priceInput.value = Number(latestMlPricePrediction.selling_price_per_kg).toFixed(2);
+  }
+  if (floorInput) {
+    floorInput.value = Number(latestMlPricePrediction.min_price_per_kg).toFixed(2);
+  }
+  if (cropNameInput && !cropNameInput.value && mlCropEl) {
+    cropNameInput.value = mlCropEl.value;
+  }
+  if (typeof updateInsurancePreview === "function") updateInsurancePreview();
+  if (typeof updateDynamicPricingPreview === "function") updateDynamicPricingPreview();
+}
+
+window.runMlCropPricePrediction = runMlCropPricePrediction;
+window.applyMlPredictionToListingForm = applyMlPredictionToListingForm;
+
 

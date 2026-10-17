@@ -201,3 +201,28 @@ class FarmerHarvestAnalyticsResponse(BaseModel):
     volume_breakdown: HarvestVolumeBreakdown
     crop_listings: List[CropPerformanceItem]
 
+
+class PricePredictionRequest(BaseModel):
+    division: Optional[str] = Field(default=None, examples=["Presidency"])
+    district: Optional[str] = Field(default="Hooghly", examples=["Hooghly"])
+    market: Optional[str] = Field(default=None, examples=["Chinsurah Market"])
+    market_type: Optional[str] = Field(default="Wholesale", examples=["Wholesale"])
+    crop: str = Field(default="Rice", examples=["Rice"])
+    quality_grade: str = Field(default="Grade A", examples=["Grade A"])
+    season: Optional[str] = Field(default=None, examples=["Winter"])
+    stock_availability: str = Field(default="Medium", examples=["Medium"])
+
+
+class PricePredictionResponse(BaseModel):
+    min_price: float
+    max_price: float
+    selling_price: float
+    unit: str = "INR/Quintal"
+    min_price_per_kg: float
+    max_price_per_kg: float
+    selling_price_per_kg: float
+    inputs: dict
+    historical_context: dict
+    model_info: dict
+
+

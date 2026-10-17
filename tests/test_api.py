@@ -1522,3 +1522,59 @@ async def test_farmer_harvest_analytics_endpoint():
         assert "percentage_of_revenue" in crop0
         assert "color_hex" in crop0
 
+
+@pytest.mark.asyncio
+async def test_ml_crop_price_predictor_model_and_endpoints():
+    from app.services.price_predictor_service import get_price_prediction
+
+    # 1. Direct invocation of get_price_prediction as specified in user code
+    direct_pred = get_price_prediction(
+        division="Presidency",
+        district="Hooghly",
+        market="Chinsurah Market",
+        market_type="Wholesale",
+        crop="Rice",
+        quality_grade="Grade A",
+        season="Winter",
+        stock_availability="Medium",
+    )
+    assert "min_price" in direct_pred
+    assert "max_price" in direct_pred
+    assert "selling_price" in direct_pred
+    assert direct_pred["min_price"] > 0
+    assert direct_pred["max_price"] >= direct_pred["min_price"]
+    assert direct_pred["min_price"] <= direct_pred["selling_price"] <= direct_pred["max_price"]
+
+    # 2. FastAPI POST /api/v1/farmers/predict-price
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        post_res = await ac.post("/api/v1/farmers/predict-price", json={
+            "division": "Presidency",
+            "district": "Hooghly",
+            "market": "Chinsurah Market",
+            "market_type": "Wholesale",
+            "crop": "Rice",
+            "quality_grade": "Grade A",
+            "season": "Winter",
+            "stock_availability": "Medium",
+        })
+        assert post_res.status_code == 200
+        pdata = post_res.json()
+        assert pdata["min_price"] == direct_pred["min_price"]
+        assert pdata["max_price"] == direct_pred["max_price"]
+        assert pdata["selling_price"] == direct_pred["selling_price"]
+        assert pdata["selling_price_per_kg"] == round(direct_pred["selling_price"] / 100.0, 2)
+
+        # 3. FastAPI GET /api/v1/farmers/predict-price and /options
+        get_res = await ac.get("/api/v1/farmers/predict-price?crop=Wheat&district=Nadia&quality_grade=Premium")
+        assert get_res.status_code == 200
+        gdata = get_res.json()
+        assert gdata["inputs"]["crop"] == "Wheat"
+        assert gdata["selling_price"] > 0
+
+        opt_res = await ac.get("/api/v1/farmers/predict-price/options")
+        assert opt_res.status_code == 200
+        opts = opt_res.json()
+        assert set(opts["crops"]) == {"Barley", "Cotton", "Lentil", "Maize", "Mustard", "Rice", "Soybean", "Wheat"}
+
+

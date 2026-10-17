@@ -60,6 +60,7 @@ body {
   color: #ffffff;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 20px;
   gap: 16px;
   position: sticky;

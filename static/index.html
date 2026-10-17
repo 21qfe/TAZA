@@ -36,7 +36,7 @@
     </div>
   </aside>
 
-  <!-- 2. PRIMARY COMMERCIAL HEADER -->
+  <!-- 2. PRIMARY COMMERCIAL HEADER (Only TAZA Brand & Language Filter) -->
   <header class="main-header">
     <!-- Brand Logo -->
     <div class="nav-left">
@@ -47,32 +47,9 @@
           <span class="logo-domain">.in</span>
         </div>
       </div>
-
-      <!-- Delivery Pin / Location Picker -->
-      <div class="nav-delivery" onclick="changeDeliveryDistrict()">
-        <i data-lucide="map-pin"></i>
-        <div class="delivery-text">
-          <span class="line-1" id="navDeliveryHeader">Delivering to Kolkata 700001</span>
-          <span class="line-2" id="navDeliveryDistrict">Bengal Agricultural Corridor</span>
-        </div>
-      </div>
     </div>
 
-    <!-- Global Search Bar -->
-    <div class="nav-search">
-      <select id="searchCategory" class="search-dropdown" onchange="filterCategory(this.value)">
-        <option value="all">All Crops</option>
-        <option value="VEGETABLES">Vegetables</option>
-        <option value="FRUITS">Fruits</option>
-        <option value="GRAINS_PADDY">Grains & Rice</option>
-        <option value="TUBERS">Tubers & Potatoes</option>
-        <option value="SPICES">Spices</option>
-      </select>
-      <input type="text" id="globalSearchInput" placeholder="Search direct farm produce: 'Singur Potato', 'Gobindobhog', 'Himsagar'..." oninput="handleSearchInput(this.value)" />
-      <button class="search-submit" onclick="triggerSearch()"><i data-lucide="search"></i></button>
-    </div>
-
-    <!-- Right Controls: Language Selector, Portal Badge, Account, Orders & Cart -->
+    <!-- Right Controls: Language Filter Only -->
     <div class="nav-right">
       <!-- Multilingual Switcher -->
       <div class="lang-selector-wrap" title="Change Language / ভাষা পরিবর্তন / भाषा बदलें">
@@ -83,27 +60,29 @@
           <option value="hi">हिंदी (HI)</option>
         </select>
       </div>
+    </div>
 
-      <!-- Account / Portal Tray -->
-      <div class="nav-item" onclick="handleNavAccountClick()" id="navAccountTray" title="Sign In / Farmer Account Profile">
-        <span class="line-1" id="navUserGreeting">Hello, Sourav</span>
-        <span class="line-2" id="navUserRole">Sign In / Hub <i data-lucide="key-round" style="width:11px;height:11px;display:inline-block;margin-left:2px;"></i></span>
+    <!-- Hidden compatibility bridge for background JS state/translations -->
+    <div style="display: none !important;" aria-hidden="true">
+      <div id="navDeliveryHeader">Delivering to Kolkata 700001</div>
+      <div id="navDeliveryDistrict">Bengal Agricultural Corridor</div>
+      <select id="searchCategory">
+        <option value="all">All Crops</option>
+        <option value="VEGETABLES">Vegetables</option>
+        <option value="FRUITS">Fruits</option>
+        <option value="GRAINS_PADDY">Grains & Rice</option>
+        <option value="TUBERS">Tubers & Potatoes</option>
+        <option value="SPICES">Spices</option>
+      </select>
+      <input type="text" id="globalSearchInput" placeholder="Search direct farm produce..." />
+      <div id="navAccountTray" onclick="handleNavAccountClick()">
+        <span id="navUserGreeting">Hello, Sourav</span>
+        <span id="navUserRole">Sign In / Hub</span>
       </div>
-
-      <!-- Returns & Direct Orders -->
-      <div class="nav-item" onclick="openOrdersModal()">
-        <span class="line-1" id="navOrdersLine1">Returns</span>
-        <span class="line-2" id="navOrdersLine2">& Orders</span>
-      </div>
-
-      <!-- Slide Cart Trigger -->
-      <div class="cart-trigger" onclick="toggleCartDrawer()">
-        <div class="cart-icon-wrapper">
-          <i data-lucide="shopping-cart"></i>
-          <span id="cartCountBadge" class="cart-badge">0</span>
-        </div>
-        <span class="cart-label" id="navCartLabel">Cart</span>
-      </div>
+      <span id="navOrdersLine1">Returns</span>
+      <span id="navOrdersLine2">& Orders</span>
+      <span id="cartCountBadge">0</span>
+      <span id="navCartLabel">Cart</span>
     </div>
   </header>
 
@@ -682,101 +661,291 @@
             <h3 id="farmerFormTitle">List Harvest for Consumer &amp; Bulk Sale</h3>
           </div>
           <form id="addCropForm" onsubmit="handleNewCropListing(event)" class="commercial-form">
-            <div class="form-field">
-              <label id="labelCropName">Crop Name &amp; Variety</label>
-              <input type="text" id="cropName" list="cropSuggestions" placeholder="e.g. Jyoti Potato, Himsagar Mango, Fresh Tomato..." autocomplete="off" required />
-              <div class="crop-quick-chips" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;">
-                <span class="crop-chip" id="chip1" onclick="quickSelectCrop('Jyoti Potato', 'TUBERS', 'Hooghly', 18.5)" style="cursor: pointer; font-size: 0.76rem; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 12px; border: 1px solid #bae6fd; font-weight: 500;">🥔 Jyoti Potato (₹18.50)</span>
-                <span class="crop-chip" id="chip2" onclick="quickSelectCrop('Himsagar Mango', 'FRUITS', 'Malda', 65.0)" style="cursor: pointer; font-size: 0.76rem; background: #fef3c7; color: #b45309; padding: 3px 8px; border-radius: 12px; border: 1px solid #fde68a; font-weight: 500;">🥭 Himsagar Mango (₹65.00)</span>
-                <span class="crop-chip" id="chip3" onclick="quickSelectCrop('Gobindobhog Rice', 'GRAINS_PADDY', 'Purba Bardhaman', 72.0)" style="cursor: pointer; font-size: 0.76rem; background: #fef08a; color: #854d0e; padding: 3px 8px; border-radius: 12px; border: 1px solid #fde047; font-weight: 500;">🌾 Gobindobhog Rice (₹72.00)</span>
-                <span class="crop-chip" id="chip4" onclick="quickSelectCrop('Fresh Hybrid Tomato', 'VEGETABLES', 'Hooghly', 26.0)" style="cursor: pointer; font-size: 0.76rem; background: #fee2e2; color: #b91c1c; padding: 3px 8px; border-radius: 12px; border: 1px solid #fecaca; font-weight: 500;">🍅 Fresh Tomato (₹26.00)</span>
-                <span class="crop-chip" id="chip5" onclick="quickSelectCrop('Green Bullet Chili', 'SPICES', 'Nadia', 60.0)" style="cursor: pointer; font-size: 0.76rem; background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 12px; border: 1px solid #bbf7d0; font-weight: 500;">🌶️ Green Chili (₹60.00)</span>
-                <span class="crop-chip" id="chip6" onclick="quickSelectCrop('White Garlic', 'SPICES', 'Nadia', 110.0)" style="cursor: pointer; font-size: 0.76rem; background: #f1f5f9; color: #334155; padding: 3px 8px; border-radius: 12px; border: 1px solid #cbd5e1; font-weight: 500;">🧄 White Garlic (₹110.00)</span>
-                <span class="crop-chip" id="chip7" onclick="quickSelectCrop('Large Cardamom', 'SPICES', 'Darjeeling', 950.0)" style="cursor: pointer; font-size: 0.76rem; background: #fae8ff; color: #86198f; padding: 3px 8px; border-radius: 12px; border: 1px solid #f5d0fe; font-weight: 500;">🌿 Large Cardamom (₹950.00)</span>
-              </div>
-              <datalist id="cropSuggestions">
-                <option value="Jyoti Potato">
-                <option value="Chandramukhi Potato">
-                <option value="Sweet Potato (Ranga Aloo)">
-                <option value="Taro Root (Gathi Kochu)">
-                <option value="Elephant Foot Yam (Ol Kochu)">
-                <option value="Pointed Gourd (Potol)">
-                <option value="Cauliflower (Phool Gobhi)">
-                <option value="Cabbage (Bandha Gobhi)">
-                <option value="Fresh Hybrid Tomato">
-                <option value="Red Onion (Peyaj)">
-                <option value="Muktakeshi Brinjal (Begun)">
-                <option value="Ladyfinger (Bhindi / Dherosh)">
-                <option value="Green Tender Peas (Motor Shuti)">
-                <option value="Bitter Gourd (Karela / Uchhe)">
-                <option value="Bottle Gourd (Lau)">
-                <option value="Ridge Gourd (Jhinge)">
-                <option value="Sweet Pumpkin (Kumro)">
-                <option value="Fresh Spinach (Palong Shak)">
-                <option value="Crisp Salad Cucumber (Shosha)">
-                <option value="Green Bell Capsicum (Shimla Mirch)">
-                <option value="Fresh Orange Carrot (Gajar)">
-                <option value="White Radish (Mula)">
-                <option value="French Beans">
-                <option value="Tender Drumsticks (Sojne Danta)">
-                <option value="Himsagar Mango">
-                <option value="Langra Mango">
-                <option value="Fazli Mango">
-                <option value="Gopalbhog Mango">
-                <option value="Amrapali Mango">
-                <option value="Darjeeling Mandarin Orange">
-                <option value="Bengal Martaman Banana">
-                <option value="Bombai Litchi">
-                <option value="Baruipur Sweet Guava (Peyara)">
-                <option value="Raw Green Papaya (Pepe)">
-                <option value="Queen Sweet Pineapple">
-                <option value="Sundarbans Watermelon (Tormuj)">
-                <option value="Raw Tender Jackfruit (Enchor)">
-                <option value="Gobindobhog Rice">
-                <option value="Minikit Rice">
-                <option value="Swarna Rice (Paddy)">
-                <option value="Ratna Boro Rice">
-                <option value="Sharbati Wheat">
-                <option value="Yellow Feed Maize (Corn)">
-                <option value="Green Gram (Moong Dal)">
-                <option value="Red Lentil (Masoor Dal)">
-                <option value="Green Bullet Chili (Kacha Lanka)">
-                <option value="Fresh Mountain Ginger (Adrak)">
-                <option value="White Garlic (Rosun)">
-                <option value="Raw Turmeric (Kacha Haldi)">
-                <option value="Yellow Mustard (Shorshe)">
-                <option value="Large Cardamom (Alainchi)">
-                <option value="Coriander Seeds (Dhone)">
-                <option value="Tossa Golden Jute">
-              </datalist>
+            <!-- Hidden Legacy Elements for compatibility -->
+            <div style="display: none;" aria-hidden="true">
+              <span id="liveMandiModalPrice">₹0.00/kg</span>
+              <span id="liveEstimatedRetailPrice">₹0.00/kg</span>
+              <span id="liveFarmerGainBadge">Active</span>
+              <span id="liveMandiName">APMC</span>
+              <span id="liveConsumerSavingsText">Fair-trade verified</span>
+              <span id="chip1"></span><span id="chip2"></span>
             </div>
 
-            <div class="form-row-2">
-              <div class="form-field">
-                <label id="labelCategory">Category</label>
-                <select id="cropCategory" required>
-                  <option value="VEGETABLES" id="optVeg">Vegetables</option>
-                  <option value="FRUITS" id="optFruits">Fruits</option>
-                  <option value="GRAINS_PADDY" id="optGrains">Grains &amp; Rice</option>
-                  <option value="TUBERS" id="optTubers">Tubers &amp; Roots</option>
-                  <option value="SPICES" id="optSpices">Spices</option>
-                </select>
+            <!-- SECTION 1: CROP SELECTION & QUANTITY -->
+            <div class="form-group-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <label id="labelCropName" for="cropName" style="font-size: 13px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0;">
+                  <i data-lucide="sprout" style="width: 16px; height: 16px; color: #16a34a;"></i>
+                  <span>Select Crop (Model Supported Selection)</span>
+                </label>
+                <span style="font-size: 11px; background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 999px; font-weight: 700;">
+                  🤖 8 Trained ML Crops
+                </span>
               </div>
-              <div class="form-field">
-                <label id="labelStock">Available Stock (kg)</label>
-                <input type="number" id="cropQuantity" placeholder="e.g. 500" min="1" step="0.5" oninput="syncListingStockWithAiStorage(this.value); updateInsurancePreview();" required />
-                <!-- Synchronized AI Storage Status Badge -->
-                <div id="cropAiSyncNotice" style="margin-top: 5px; font-size: 11px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 5px 8px; border-radius: 6px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;">
-                  <span id="cropAiSyncText"><i data-lucide="check-circle" style="width: 12px; height: 12px; display: inline-block; vertical-align: -1px;"></i> Synced with AI Hub (42,500 kg cap)</span>
-                  <span id="cropAiSyncPct" style="font-weight: 700; color: #047857;">1.2% filled</span>
+
+              <!-- Crop Dropdown (Farmer cannot type unsupported inputs) -->
+              <select id="cropName" onchange="onFarmerCropDropdownChange(this.value)" required style="width: 100%; padding: 11px 14px; border-radius: 8px; border: 2px solid #16a34a; font-size: 14px; font-weight: 700; color: #065f46; background: #f0fdf4; outline: none; cursor: pointer;">
+                <option value="Rice" selected>🌾 Rice (ধান / চাল - Gobindobhog, Swarna, Minikit)</option>
+                <option value="Wheat">🌿 Wheat (গম - Sharbati, Durum)</option>
+                <option value="Maize">🌽 Maize (ভুট্টা - Yellow Feed Corn)</option>
+                <option value="Lentil">🫘 Lentil (মসুর ডাল - Masoor Dal, Pulses)</option>
+                <option value="Mustard">🌼 Mustard (সরিষা - Yellow Mustard, Sarson)</option>
+                <option value="Soybean">🌱 Soybean (সয়াবিন - Soya Grain)</option>
+                <option value="Barley">🌾 Barley (যব - Jau)</option>
+                <option value="Cotton">☁️ Cotton (তুলা - Kapas)</option>
+              </select>
+
+              <!-- Quick Select Chips for the 8 Model Crops -->
+              <div class="crop-quick-chips" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;">
+                <span class="crop-chip active" data-crop="Rice" onclick="quickSelectModelCrop('Rice')" style="cursor: pointer; font-size: 0.74rem; background: #ecfdf5; color: #047857; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #10b981; font-weight: 700;">🌾 Rice</span>
+                <span class="crop-chip" data-crop="Wheat" onclick="quickSelectModelCrop('Wheat')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">🌿 Wheat</span>
+                <span class="crop-chip" data-crop="Maize" onclick="quickSelectModelCrop('Maize')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">🌽 Maize</span>
+                <span class="crop-chip" data-crop="Lentil" onclick="quickSelectModelCrop('Lentil')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">🫘 Lentil</span>
+                <span class="crop-chip" data-crop="Mustard" onclick="quickSelectModelCrop('Mustard')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">🌼 Mustard</span>
+                <span class="crop-chip" data-crop="Soybean" onclick="quickSelectModelCrop('Soybean')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">🌱 Soybean</span>
+                <span class="crop-chip" data-crop="Barley" onclick="quickSelectModelCrop('Barley')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">🌾 Barley</span>
+                <span class="crop-chip" data-crop="Cotton" onclick="quickSelectModelCrop('Cotton')" style="cursor: pointer; font-size: 0.74rem; background: #f8fafc; color: #475569; padding: 4px 10px; border-radius: 999px; border: 1.5px solid #cbd5e1; font-weight: 600;">☁️ Cotton</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
+                <div>
+                  <label id="labelCategory" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Category</label>
+                  <select id="cropCategory" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 13px; font-weight: 600; background: #ffffff;">
+                    <option value="GRAINS_PADDY" id="optGrains" selected>Grains, Rice &amp; Pulses</option>
+                    <option value="SPICES" id="optSpices">Oilseeds, Cotton &amp; Spices</option>
+                    <option value="VEGETABLES" id="optVeg">Vegetables</option>
+                    <option value="FRUITS" id="optFruits">Fruits</option>
+                    <option value="TUBERS" id="optTubers">Tubers &amp; Roots</option>
+                  </select>
+                </div>
+                <div>
+                  <label id="labelStock" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Available Stock (kg)</label>
+                  <input type="number" id="cropQuantity" value="500" placeholder="e.g. 500" min="1" step="0.5" oninput="syncListingStockWithAiStorage(this.value); updateInsurancePreview();" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 13px; font-weight: 700;" />
+                  <div id="cropAiSyncNotice" style="margin-top: 5px; font-size: 11px; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 8px; border-radius: 6px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534;">
+                    <span id="cropAiSyncText"><i data-lucide="check-circle" style="width: 12px; height: 12px; display: inline-block; vertical-align: -1px;"></i> Synced with Storage Hub</span>
+                    <span id="cropAiSyncPct" style="font-weight: 700; color: #047857;">Ready</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Harvest Date & Time Input with Real-Time Freshness Tally Indicator -->
-            <div class="form-field" style="margin-bottom: 12px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 12px;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 4px;">
-                <label id="labelHarvestTime" for="cropHarvestTimestamp" style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0;">
+            <!-- SECTION 2: AI CROP PRICE PREDICTOR & PRICING (mdeol1.pkl) -->
+            <div id="mlPricePredictorBox" class="form-group-card" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1.5px solid #38bdf8; border-radius: 12px; padding: 16px; margin-bottom: 14px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="background: #0284c7; color: #ffffff; font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px;">ML MODEL: mdeol1.pkl</span>
+                  <strong style="font-size: 14px; color: #0c4a6e;">🤖 AI Crop Price Predictor (Min / Max / Selling Rate)</strong>
+                </div>
+                <button type="button" id="btnRunMlPricePredictor" onclick="runMlCropPricePrediction()" style="background: #0284c7; color: #ffffff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                  ⚡ Recalculate
+                </button>
+              </div>
+
+              <!-- Synced select for ML service crop parameter -->
+              <select id="mlPredCrop" style="display: none;" aria-hidden="true">
+                <option value="Rice" selected>Rice</option>
+                <option value="Wheat">Wheat</option>
+                <option value="Maize">Maize</option>
+                <option value="Lentil">Lentil</option>
+                <option value="Mustard">Mustard</option>
+                <option value="Soybean">Soybean</option>
+                <option value="Barley">Barley</option>
+                <option value="Cotton">Cotton</option>
+              </select>
+
+              <!-- 5 Compact Market Parameter Dropdowns -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px;">
+                <div>
+                  <label for="mlPredMarket" style="font-size: 11px; font-weight: 700; color: #0369a1; display: block; margin-bottom: 3px;">Mandi Market:</label>
+                  <select id="mlPredMarket" onchange="runMlCropPricePrediction()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid #7dd3fc; font-size: 12px; font-weight: 600; background: #ffffff;">
+                    <option value="Chinsurah Market" data-district="Hooghly" data-division="Presidency" selected>Chinsurah Market (Hooghly)</option>
+                    <option value="Bardhaman Town Market" data-district="Purba Bardhaman" data-division="Burdwan">Bardhaman Town Market</option>
+                    <option value="Ranaghat Market" data-district="Nadia" data-division="Presidency">Ranaghat Market (Nadia)</option>
+                    <option value="Krishnanagar Market" data-district="Nadia" data-division="Presidency">Krishnanagar Market (Nadia)</option>
+                    <option value="Kalyani Market" data-district="Nadia" data-division="Presidency">Kalyani Market (Nadia)</option>
+                    <option value="English Bazar Market" data-district="Malda" data-division="Malda">English Bazar Market (Malda)</option>
+                    <option value="Malda Regulated Market" data-district="Malda" data-division="Malda">Malda Regulated Market</option>
+                    <option value="Barasat Market" data-district="North 24 Parganas" data-division="Presidency">Barasat Market (N 24 Pgs)</option>
+                    <option value="Posta Bazar" data-district="Kolkata" data-division="Presidency">Posta Bazar (Kolkata)</option>
+                    <option value="Howrah Maidan Market" data-district="Howrah" data-division="Presidency">Howrah Maidan Market</option>
+                    <option value="Tamluk Market" data-district="Purba Medinipur" data-division="Medinipur">Tamluk Market (Medinipur)</option>
+                    <option value="Contai Market" data-district="Purba Medinipur" data-division="Medinipur">Contai Market (Medinipur)</option>
+                    <option value="Berhampore Market" data-district="Murshidabad" data-division="Presidency">Berhampore Market</option>
+                    <option value="Suri Market" data-district="Birbhum" data-division="Burdwan">Suri Market (Birbhum)</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="mlPredMarketType" style="font-size: 11px; font-weight: 700; color: #0369a1; display: block; margin-bottom: 3px;">Market Type:</label>
+                  <select id="mlPredMarketType" onchange="runMlCropPricePrediction()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid #7dd3fc; font-size: 12px; font-weight: 600; background: #ffffff;">
+                    <option value="Wholesale" selected>Wholesale</option>
+                    <option value="Retail">Retail</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="mlPredQualityGrade" style="font-size: 11px; font-weight: 700; color: #0369a1; display: block; margin-bottom: 3px;">Quality Grade:</label>
+                  <select id="mlPredQualityGrade" onchange="runMlCropPricePrediction()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid #7dd3fc; font-size: 12px; font-weight: 600; background: #ffffff;">
+                    <option value="Premium">Premium</option>
+                    <option value="Grade A" selected>Grade A</option>
+                    <option value="Grade B">Grade B</option>
+                    <option value="Grade C">Grade C</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="mlPredSeason" style="font-size: 11px; font-weight: 700; color: #0369a1; display: block; margin-bottom: 3px;">Season:</label>
+                  <select id="mlPredSeason" onchange="runMlCropPricePrediction()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid #7dd3fc; font-size: 12px; font-weight: 600; background: #ffffff;">
+                    <option value="Winter" selected>Winter</option>
+                    <option value="Summer">Summer</option>
+                    <option value="Monsoon">Monsoon</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="mlPredStock" style="font-size: 11px; font-weight: 700; color: #0369a1; display: block; margin-bottom: 3px;">Stock Level:</label>
+                  <select id="mlPredStock" onchange="runMlCropPricePrediction()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid #7dd3fc; font-size: 12px; font-weight: 600; background: #ffffff;">
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- ML Prediction Results Display -->
+              <div id="mlPredResultsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 10px;">
+                <div style="background: #ffffff; border: 1px solid #bae6fd; border-radius: 8px; padding: 8px 10px; text-align: center;">
+                  <div style="font-size: 11px; color: #64748b; font-weight: 700;">Predicted Min Price</div>
+                  <div id="mlValMinPriceQ" style="font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px;">₹4,598.59 / Qtl</div>
+                  <small id="mlValMinPriceKg" style="font-size: 11px; color: #0369a1; font-weight: 700;">₹45.99 / kg</small>
+                </div>
+                <div style="background: #ffffff; border: 1px solid #bae6fd; border-radius: 8px; padding: 8px 10px; text-align: center;">
+                  <div style="font-size: 11px; color: #64748b; font-weight: 700;">Predicted Max Price</div>
+                  <div id="mlValMaxPriceQ" style="font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 2px;">₹4,987.80 / Qtl</div>
+                  <small id="mlValMaxPriceKg" style="font-size: 11px; color: #0369a1; font-weight: 700;">₹49.88 / kg</small>
+                </div>
+                <div style="background: #ecfdf5; border: 1.5px solid #16a34a; border-radius: 8px; padding: 8px 10px; text-align: center;">
+                  <div style="font-size: 11px; color: #065f46; font-weight: 800;">🎯 Optimal Selling Price</div>
+                  <div id="mlValSellingPriceQ" style="font-size: 15px; font-weight: 800; color: #15803d; margin-top: 2px;">₹4,793.20 / Qtl</div>
+                  <small id="mlValSellingPriceKg" style="font-size: 11.5px; color: #047857; font-weight: 800;">₹47.93 / kg</small>
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #7dd3fc;">
+                <small id="mlPredContextNote" style="font-size: 11.5px; color: #0369a1;">
+                  📊 Historical Avg: <strong>₹4,761.58/Qtl</strong> • Demand: <strong>Medium</strong> • Weather: <strong>Warm &amp; Humid</strong>
+                </small>
+                <button type="button" id="btnApplyMlPredictedPrice" onclick="applyMlPredictionToListingForm()" style="background: #15803d; color: #ffffff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                  <i data-lucide="check" style="width: 14px; height: 14px;"></i> Apply Optimal &amp; Floor Price
+                </button>
+              </div>
+
+              <!-- Target Base Price & MSP Minimum Floor Input Fields -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-field" style="margin: 0;">
+                  <label id="labelPrice" style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 4px; display: block;">Base Target Price (₹/kg)</label>
+                  <input type="number" id="cropPrice" value="47.93" placeholder="e.g. 47.93" step="0.5" min="1" oninput="updateInsurancePreview(); updateDynamicPricingPreview();" required style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #0284c7; font-size: 14px; font-weight: 800; color: #0c4a6e; background: #ffffff;" />
+                  <small style="color: #64748b; font-size: 11px; margin-top: 3px; display: block;" id="helperNetPayout">Baseline target payout without middleman deductions.</small>
+                </div>
+                <div class="form-field" style="margin: 0;">
+                  <label id="labelPriceFloor" style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                    <span id="labelFloorText">🛡️ Minimum Price Floor (MSP ₹/kg)</span>
+                  </label>
+                  <input type="number" id="cropMinPriceFloor" value="45.99" placeholder="e.g. 45.99" step="0.5" min="0" oninput="updateDynamicPricingPreview()" style="width: 100%; padding: 9px 12px; border-radius: 8px; border: 1.5px solid #0284c7; font-size: 14px; font-weight: 800; color: #0c4a6e; background: #ffffff;" />
+                  <small style="color: #64748b; font-size: 11px; margin-top: 3px; display: block;" id="helperPriceFloor">Protects harvest against distress sales during dips.</small>
+                </div>
+              </div>
+
+              <!-- Strategy Choice (Dynamic Peg vs Fixed) -->
+              <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <label class="pricing-card-option selected" id="optDynamicPegLabel" onclick="setListingPricingStrategy('DYNAMIC_MANDI_PEG')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 2px solid #16a34a; border-radius: 8px; background: #ffffff; cursor: pointer;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="radio" name="cropPricingStrategyRadio" id="stratDynamicPeg" value="DYNAMIC_MANDI_PEG" checked style="accent-color: #16a34a;" onchange="updateDynamicPricingPreview()" />
+                    <div>
+                      <strong id="optDynamicPegTitle" style="font-size: 12px; color: #15803d; display: block;">📈 Dynamic Mandi Peg</strong>
+                      <small id="optDynamicPegSub" style="font-size: 11px; color: #64748b;">+20% Surge Bonus when market rises</small>
+                    </div>
+                  </div>
+                  <button type="button" class="pricing-info-icon-btn" onclick="openPricingStrategyInfoModal('DYNAMIC_MANDI_PEG', event)" title="Dynamic Pricing Information" style="background: none; border: none; cursor: pointer; color: #15803d;">
+                    <i data-lucide="info" style="width: 14px; height: 14px;"></i>
+                  </button>
+                </label>
+                <label class="pricing-card-option" id="optFixedPriceLabel" onclick="setListingPricingStrategy('FIXED_PRICE')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; background: #ffffff; cursor: pointer;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="radio" name="cropPricingStrategyRadio" id="stratFixedPrice" value="FIXED_PRICE" style="accent-color: #16a34a;" onchange="updateDynamicPricingPreview()" />
+                    <div>
+                      <strong id="optFixedPriceTitle" style="font-size: 12px; color: #334155; display: block;">🔒 Fixed Price</strong>
+                      <small id="optFixedPriceSub" style="font-size: 11px; color: #64748b;">Constant locked price</small>
+                    </div>
+                  </div>
+                  <button type="button" class="pricing-info-icon-btn" onclick="openPricingStrategyInfoModal('FIXED_PRICE', event)" title="Fixed Pricing Information" style="background: none; border: none; cursor: pointer; color: #64748b;">
+                    <i data-lucide="info" style="width: 14px; height: 14px;"></i>
+                  </button>
+                </label>
+              </div>
+
+              <!-- High-Market Surge Scenario Box (20% Profit Sharing Live Simulator) -->
+              <div id="pricingScenarioBox" class="pricing-scenario-box" style="margin-top: 10px; border-radius: 8px; border: 1px solid #86efac; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 10px 14px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                  <span style="font-weight: 700; font-size: 0.80rem; color: #065f46; display: flex; align-items: center; gap: 5px;">
+                    <i data-lucide="sparkles" style="width: 14px; height: 14px; color: #16a34a;"></i>
+                    <span id="scenarioBoxTitle">20% Market High Profit Share (বাজার দর বৃদ্ধি লাভ অংশীদারিত্ব)</span>
+                  </span>
+                  <div class="scenario-btn-group" style="display: flex; gap: 5px; align-items: center;">
+                    <button type="button" class="scenario-pill-btn" id="btnScenarioNormal" onclick="selectPricingScenario('NORMAL', event)">
+                      🌤️ Normal
+                    </button>
+                    <button type="button" class="scenario-pill-btn active" id="btnScenarioSurge10" onclick="selectPricingScenario('HIGH_10', event)">
+                      🚀 High (+₹10)
+                    </button>
+                    <button type="button" class="scenario-pill-btn" id="btnScenarioSurge15" onclick="selectPricingScenario('HIGH_15', event)">
+                      🔥 Spike (+₹15)
+                    </button>
+                    <button type="button" class="pricing-guide-header-btn" onclick="openPricingStrategyInfoModal('ALL', event)" style="font-size: 11px; padding: 2px 7px; border-radius: 4px; border: 1px solid #cbd5e1; background: white; cursor: pointer;">
+                      ℹ️ Guide
+                    </button>
+                  </div>
+                </div>
+
+                <div id="scenarioLiveResults" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; margin-top: 4px;">
+                  <div class="scenario-metric-card" style="background: white; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.68rem; color: #64748b;" id="lblMandiRate">Mandi Benchmark</div>
+                    <div style="font-size: 0.90rem; font-weight: 800; color: #1e293b;" id="valMandiRate">₹35.00/kg</div>
+                    <small style="font-size: 0.65rem; color: #16a34a; font-weight: 700;" id="valMarketSpike">+₹10.00 spike</small>
+                  </div>
+                  <div class="scenario-metric-card" style="background: #ecfdf5; border: 1.5px solid #16a34a; border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.68rem; color: #065f46; font-weight: 700;" id="lblFarmerProfitShare">Farmer 20% Share</div>
+                    <div style="font-size: 0.90rem; font-weight: 800; color: #15803d;" id="valFarmerProfitShare">+₹2.00/kg</div>
+                    <small style="font-size: 0.65rem; color: #047857;" id="valSurgeBonusBadge">🎉 20% Bonus</small>
+                  </div>
+                  <div class="scenario-metric-card" style="background: white; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.68rem; color: #64748b;" id="lblFinalFarmerPayout">Realized Payout</div>
+                    <div style="font-size: 0.90rem; font-weight: 800; color: #0f172a;" id="valFinalFarmerPayout">₹27.00/kg</div>
+                    <small style="font-size: 0.65rem; color: #15803d; font-weight: 700;" id="valFarmerGainPct">+8.0% gain</small>
+                  </div>
+                  <div class="scenario-metric-card" style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 6px; text-align: center;">
+                    <div style="font-size: 0.68rem; color: #854d0e;" id="lblExtraLotEarnings">Extra on Batch</div>
+                    <div style="font-size: 0.90rem; font-weight: 800; color: #a16207;" id="valExtraLotEarnings">+₹1,000.00</div>
+                    <small style="font-size: 0.65rem; color: #ca8a04;" id="valBatchQtyRef">for 500 kg</small>
+                  </div>
+                </div>
+
+                <div id="scenarioExplanationText" style="margin-top: 6px; font-size: 0.72rem; color: #065f46; background: rgba(255,255,255,0.75); border-radius: 5px; padding: 4px 8px; line-height: 1.3;">
+                  🚀 <strong>High Market Surge:</strong> Wholesale Mandi spiked +₹10.00/kg. You automatically receive a <strong>20% profit share bonus (+₹2.00/kg)</strong>.
+                </div>
+              </div>
+
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; background: #ffffff; border: 1px dashed #7dd3fc; border-radius: 6px; padding: 6px 12px;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #0369a1; font-weight: 700;">
+                  <label for="cropMinQty" id="labelMinQty" style="margin: 0;">Min Order (kg):</label>
+                  <input type="number" id="cropMinQty" value="0.5" min="0.15" step="0.05" required style="width: 70px; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; font-weight: 700;" />
+                </div>
+                <div id="dynamicPricingPreviewStrip" style="font-size: 12px; color: #065f46; font-weight: 700;">
+                  Today's Dynamic Market: <span id="previewDynamicRateText" style="color: #15803d; font-size: 13px; font-weight: 800;">₹47.93/kg</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION 3: HARVEST TIMESTAMP & LOCATION DETAILS -->
+            <div class="form-group-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 4px;">
+                <label id="labelHarvestTime" for="cropHarvestTimestamp" style="font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px;">
                   <i data-lucide="calendar-clock" style="width: 16px; height: 16px; color: #16a34a;"></i>
                   <span>Harvest Date &amp; Time (ফসল তোলার তারিখ ও সময়)</span>
                 </label>
@@ -784,28 +953,28 @@
                   ⏱️ Fresh Cut: 0.0 hrs ago
                 </span>
               </div>
-              
-              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <input type="datetime-local" id="cropHarvestTimestamp" style="flex: 1; min-width: 220px; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem; background: #ffffff;" oninput="updateListingFreshnessPreview()" onchange="updateListingFreshnessPreview()" required />
+
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                <input type="datetime-local" id="cropHarvestTimestamp" style="flex: 1; min-width: 200px; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 13px; background: #ffffff;" oninput="updateListingFreshnessPreview()" onchange="updateListingFreshnessPreview()" required />
                 <div class="harvest-quick-presets" style="display: flex; gap: 5px; flex-wrap: wrap;">
                   <button type="button" class="btn-xs-pill" onclick="setHarvestTimePreset(0)" style="font-size: 0.73rem; background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 9px; border-radius: 6px; cursor: pointer; color: #334155; font-weight: 600;">⚡ Just Harvested</button>
                   <button type="button" class="btn-xs-pill" onclick="setHarvestTimePreset(2)" style="font-size: 0.73rem; background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 9px; border-radius: 6px; cursor: pointer; color: #334155; font-weight: 600;">2h Ago</button>
-                  <button type="button" class="btn-xs-pill" onclick="setHarvestTimePreset(6)" style="font-size: 0.73rem; background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 9px; border-radius: 6px; cursor: pointer; color: #334155; font-weight: 600;">6h (Morning)</button>
+                  <button type="button" class="btn-xs-pill" onclick="setHarvestTimePreset(6)" style="font-size: 0.73rem; background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 9px; border-radius: 6px; cursor: pointer; color: #334155; font-weight: 600;">6h Morning</button>
                   <button type="button" class="btn-xs-pill" onclick="setHarvestTimePreset(24)" style="font-size: 0.73rem; background: #ffffff; border: 1px solid #cbd5e1; padding: 5px 9px; border-radius: 6px; cursor: pointer; color: #334155; font-weight: 600;">Yesterday</button>
                 </div>
               </div>
 
               <!-- Live Freshness Index Tally Card -->
-              <div id="listingFreshnessCard" style="margin-top: 10px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+              <div id="listingFreshnessCard" style="margin-bottom: 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
                 <div>
-                  <div style="font-size: 0.72rem; color: #64748b;" id="labelLiveFreshnessTitle">Real-Time Biological Freshness Index [e^(-λ·t)]</div>
+                  <div style="font-size: 0.70rem; color: #64748b;" id="labelLiveFreshnessTitle">Real-Time Biological Freshness Index [e^(-λ·t)]</div>
                   <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px;">
-                    <span id="previewFreshnessNumber" style="font-size: 1.15rem; font-weight: 800; color: #15803d;">97.0%</span>
-                    <span id="previewFreshnessGrade" style="font-size: 0.72rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 1px 7px; border-radius: 999px;">Ultra Farm-Fresh</span>
+                    <span id="previewFreshnessNumber" style="font-size: 1.05rem; font-weight: 800; color: #15803d;">97.0%</span>
+                    <span id="previewFreshnessGrade" style="font-size: 0.70rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 1px 6px; border-radius: 999px;">Ultra Farm-Fresh</span>
                   </div>
                 </div>
-                <div style="flex: 1; min-width: 140px; max-width: 240px;">
-                  <div style="height: 7px; width: 100%; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                <div style="flex: 1; min-width: 120px; max-width: 220px;">
+                  <div style="height: 6px; width: 100%; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
                     <div id="previewFreshnessBar" style="height: 100%; width: 97%; background: #16a34a; transition: width 0.3s, background 0.3s;"></div>
                   </div>
                   <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: #94a3b8; margin-top: 2px;">
@@ -814,230 +983,48 @@
                   </div>
                 </div>
               </div>
-              <small style="color: #64748b; font-size: 0.74rem; margin-top: 5px; display: block;" id="helperHarvestTime">
-                💡 Tallying harvest time against current clock computes the live freshness index and guarantees consumer quality upon delivery.
-              </small>
-            </div>
 
-            <!-- Stock-Market Style Farmer Pricing Choice Selector -->
-            <div class="form-field" style="margin-bottom: 12px;">
-              <label id="labelPricingStrategy" style="font-weight: 700; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
-                <span><i data-lucide="trending-up" style="width: 15px; height: 15px; display: inline-block; vertical-align: -2px; margin-right: 4px; color: #15803d;"></i> <span id="pricingChoiceTitle">Daily Pricing Strategy (দিনের বাজার দর মডেল)</span></span>
-                <div style="display: flex; align-items: center; gap: 6px;">
-                  <button type="button" class="pricing-guide-header-btn" onclick="openPricingStrategyInfoModal('ALL', event)" title="Open Pricing Guide & 20% Profit Surge Calculator">
-                    <i data-lucide="help-circle" style="width: 13px; height: 13px; display: inline-block; vertical-align: -1px;"></i>
-                    <span id="btnPricingGuideText">Pricing Guide &amp; 20% Surge Calculator</span>
-                  </button>
-                  <span style="font-size: 0.72rem; color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Stock-Market Model</span>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label id="labelDistrict" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Production District</label>
+                  <select id="cropDistrict" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 13px; font-weight: 600; background: #ffffff;">
+                    <option value="Hooghly">Hooghly (Singur / Tarakeswar)</option>
+                    <option value="Nadia">Nadia (Ranaghat / Bethuadahari)</option>
+                    <option value="Purba Bardhaman">Purba Bardhaman (Memari / Kalna)</option>
+                    <option value="Malda">Malda (English Bazar)</option>
+                    <option value="Murshidabad">Murshidabad</option>
+                    <option value="Darjeeling">Darjeeling</option>
+                    <option value="South 24 Parganas">South 24 Parganas</option>
+                    <option value="North 24 Parganas">North 24 Parganas</option>
+                    <option value="Bankura">Bankura</option>
+                  </select>
                 </div>
-              </label>
-              <div class="pricing-strategy-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <label class="pricing-card-option selected" id="optDynamicPegLabel" onclick="setListingPricingStrategy('DYNAMIC_MANDI_PEG')" style="display: flex; flex-direction: column; padding: 10px 12px; border: 2px solid #16a34a; border-radius: 8px; background: #f0fdf4; cursor: pointer; transition: all 0.2s; position: relative;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.85rem; color: #15803d;">
-                      <input type="radio" name="cropPricingStrategyRadio" id="stratDynamicPeg" value="DYNAMIC_MANDI_PEG" checked style="accent-color: #16a34a;" onchange="updateDynamicPricingPreview()" />
-                      <span id="optDynamicPegTitle">📈 Dynamic Daily Market Peg</span>
-                    </div>
-                    <button type="button" class="pricing-info-icon-btn" onclick="openPricingStrategyInfoModal('DYNAMIC_MANDI_PEG', event)" title="Dynamic Pricing Information & 20% Profit Share Guide">
-                      <i data-lucide="info" style="width: 14px; height: 14px;"></i>
-                    </button>
-                  </div>
-                  <small id="optDynamicPegSub" style="color: #475569; font-size: 0.73rem; margin-top: 4px; line-height: 1.3;">
-                    Tracks daily Mandi movements + <strong style="color: #15803d;">20% profit share bonus</strong> when market is high!
-                  </small>
-                </label>
-                <label class="pricing-card-option" id="optFixedPriceLabel" onclick="setListingPricingStrategy('FIXED_PRICE')" style="display: flex; flex-direction: column; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 8px; background: #f8fafc; cursor: pointer; transition: all 0.2s; position: relative;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.85rem; color: #334155;">
-                      <input type="radio" name="cropPricingStrategyRadio" id="stratFixedPrice" value="FIXED_PRICE" style="accent-color: #16a34a;" onchange="updateDynamicPricingPreview()" />
-                      <span id="optFixedPriceTitle">🔒 Fixed Farm Gate Price</span>
-                    </div>
-                    <button type="button" class="pricing-info-icon-btn" onclick="openPricingStrategyInfoModal('FIXED_PRICE', event)" title="Fixed Pricing Information">
-                      <i data-lucide="info" style="width: 14px; height: 14px;"></i>
-                    </button>
-                  </div>
-                  <small id="optFixedPriceSub" style="color: #64748b; font-size: 0.73rem; margin-top: 4px; line-height: 1.3;">
-                    Lock a steady, constant price per kg that never changes regardless of daily market swings.
-                  </small>
-                </label>
-              </div>
-
-              <!-- High-Market Surge Scenario Box (20% Profit Sharing Live Simulator) -->
-              <div id="pricingScenarioBox" class="pricing-scenario-box" style="margin-top: 10px; border-radius: 8px; border: 1px solid #86efac; background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); padding: 10px 14px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                  <span style="font-weight: 700; font-size: 0.82rem; color: #065f46; display: flex; align-items: center; gap: 5px;">
-                    <i data-lucide="sparkles" style="width: 14px; height: 14px; color: #16a34a;"></i>
-                    <span id="scenarioBoxTitle">20% Market High Profit Share Scenario (বাজার দর বৃদ্ধি লাভ অংশীদারিত্ব)</span>
-                  </span>
-                  <div class="scenario-btn-group" style="display: flex; gap: 5px;">
-                    <button type="button" class="scenario-pill-btn" id="btnScenarioNormal" onclick="selectPricingScenario('NORMAL', event)">
-                      🌤️ Normal Market
-                    </button>
-                    <button type="button" class="scenario-pill-btn active" id="btnScenarioSurge10" onclick="selectPricingScenario('HIGH_10', event)">
-                      🚀 High Surge (+₹10/kg)
-                    </button>
-                    <button type="button" class="scenario-pill-btn" id="btnScenarioSurge15" onclick="selectPricingScenario('HIGH_15', event)">
-                      🔥 Festival Spike (+₹15/kg)
-                    </button>
-                  </div>
-                </div>
-
-                <div id="scenarioLiveResults" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 6px;">
-                  <div class="scenario-metric-card" style="background: white; border: 1px solid #bbf7d0; border-radius: 6px; padding: 7px 10px; text-align: center;">
-                    <div style="font-size: 0.70rem; color: #64748b; font-weight: 600;" id="lblMandiRate">Mandi Benchmark</div>
-                    <div style="font-size: 0.95rem; font-weight: 800; color: #1e293b; margin-top: 2px;" id="valMandiRate">₹35.00/kg</div>
-                    <small style="font-size: 0.68rem; color: #16a34a; font-weight: 700;" id="valMarketSpike">+₹10.00 spike</small>
-                  </div>
-                  <div class="scenario-metric-card" style="background: #ecfdf5; border: 1.5px solid #16a34a; border-radius: 6px; padding: 7px 10px; text-align: center;">
-                    <div style="font-size: 0.70rem; color: #065f46; font-weight: 700;" id="lblFarmerProfitShare">Farmer 20% Profit Share</div>
-                    <div style="font-size: 0.95rem; font-weight: 800; color: #15803d; margin-top: 2px;" id="valFarmerProfitShare">+₹2.00/kg</div>
-                    <small style="font-size: 0.68rem; color: #047857; font-weight: 600;" id="valSurgeBonusBadge">🎉 20% Surge Bonus</small>
-                  </div>
-                  <div class="scenario-metric-card" style="background: white; border: 1px solid #bbf7d0; border-radius: 6px; padding: 7px 10px; text-align: center;">
-                    <div style="font-size: 0.70rem; color: #64748b; font-weight: 600;" id="lblFinalFarmerPayout">Your Realized Payout</div>
-                    <div style="font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-top: 2px;" id="valFinalFarmerPayout">₹27.00/kg</div>
-                    <small style="font-size: 0.68rem; color: #15803d; font-weight: 700;" id="valFarmerGainPct">+8.0% payout gain</small>
-                  </div>
-                  <div class="scenario-metric-card" style="background: #fefce8; border: 1px solid #fef08a; border-radius: 6px; padding: 7px 10px; text-align: center;">
-                    <div style="font-size: 0.70rem; color: #854d0e; font-weight: 600;" id="lblExtraLotEarnings">Extra Cash on Batch</div>
-                    <div style="font-size: 0.95rem; font-weight: 800; color: #a16207; margin-top: 2px;" id="valExtraLotEarnings">+₹1,000.00</div>
-                    <small style="font-size: 0.68rem; color: #ca8a04; font-weight: 600;" id="valBatchQtyRef">for 500 kg harvest</small>
-                  </div>
-                </div>
-
-                <div id="scenarioExplanationText" style="margin-top: 8px; font-size: 0.75rem; color: #065f46; background: rgba(255,255,255,0.75); border-radius: 5px; padding: 6px 10px; line-height: 1.4;">
-                  🚀 <strong>High Market Surge Active:</strong> Wholesale Mandi prices spiked +₹10.00/kg. Under TAZA Dynamic Pricing, you automatically receive a <strong>20% profit share bonus (+₹2.00/kg)</strong> directly on top of your baseline! Under Fixed Price, you would receive ₹0 extra.
+                <div>
+                  <label id="labelDescription" style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Description &amp; Quality Notes</label>
+                  <input type="text" id="cropDescription" placeholder="e.g. GI Tagged aromatic harvest, moisture &lt; 12%" style="width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 13px;" />
                 </div>
               </div>
             </div>
 
-            <div class="form-row-2">
-              <div class="form-field">
-                <label id="labelPrice">Base Target Price (₹/kg)</label>
-                <input type="number" id="cropPrice" placeholder="e.g. 21.50" step="0.5" min="1" oninput="updateInsurancePreview(); updateDynamicPricingPreview();" required />
-                <small style="color:#64748b; font-size: 0.78rem;" id="helperNetPayout">Baseline target payout without middleman cuts.</small>
-              </div>
-              <div class="form-field">
-                <label id="labelPriceFloor" style="display: flex; align-items: center; justify-content: space-between;">
-                  <span id="labelFloorText">🛡️ Minimum Price Floor (MSP ₹/kg)</span>
-                  <span style="font-size: 0.7rem; color: #64748b;">(Optional Safety Net)</span>
-                </label>
-                <input type="number" id="cropMinPriceFloor" placeholder="e.g. 19.00" step="0.5" min="0" oninput="updateDynamicPricingPreview()" />
-                <small style="color:#64748b; font-size: 0.78rem;" id="helperPriceFloor">Produce will never sell below this floor even in market dips.</small>
-              </div>
-            </div>
-
-            <div class="form-row-2">
-              <div class="form-field">
-                <label id="labelMinQty">Minimum Order (kg)</label>
-                <input type="number" id="cropMinQty" value="0.5" min="0.15" step="0.05" required />
-                <small style="color:#64748b; font-size: 0.78rem;" id="helperMinQty">Lowest purchase quantity for consumers.</small>
-              </div>
-              <div class="form-field" style="display: flex; flex-direction: column; justify-content: flex-end;">
-                <!-- Dynamic Market Price Live Indicator Box -->
-                <div id="dynamicPricingPreviewStrip" style="display: flex; align-items: center; justify-content: space-between; background: #ecfdf5; border: 1px dashed #86efac; border-radius: 6px; padding: 7px 12px; margin-bottom: 2px; font-size: 0.8rem;">
-                  <span id="previewStripLabel" style="color: #065f46; font-weight: 600;">
-                    <i data-lucide="activity" style="width: 13px; height: 13px; display: inline-block; vertical-align: -2px; margin-right: 3px;"></i>
-                    Today's Dynamic Market Price:
-                  </span>
-                  <span id="previewDynamicRateText" style="font-weight: 800; color: #15803d; font-size: 0.92rem;">
-                    ₹--/kg <span class="stock-trend-pill up" style="font-size: 0.7rem; margin-left: 4px;">▲ Live</span>
-                  </span>
+            <!-- SECTION 4: INSURANCE & PUBLISH ACTION -->
+            <div class="crop-insurance-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1.5px solid #86efac; border-radius: 10px; padding: 12px 14px; margin: 12px 0 16px 0;">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 240px;">
+                  <input type="checkbox" id="cropInsuranceOptIn" checked style="width: 18px; height: 18px; accent-color: #16a34a; cursor: pointer;" onchange="toggleInsuranceDetails(this.checked)" />
+                  <label for="cropInsuranceOptIn" style="font-size: 13px; font-weight: 700; color: #0f172a; cursor: pointer; margin: 0; display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #16a34a;"></i>
+                    <span>Warehouse Storage All Risks Insurance Cover (Zero Upfront Premium)</span>
+                  </label>
                 </div>
-              </div>
-            </div>
-
-            <!-- Automated APMC Mandi Benchmark Card (Live Database Sync) -->
-            <div class="mandi-auto-card" id="mandiBenchmarkCard" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin: 12px 0 16px 0;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                <span style="font-size: 0.8rem; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.5px;" id="mandiCardTitle">
-                  <i data-lucide="database" style="width: 14px; height: 14px; display: inline-block; vertical-align: -2px; margin-right: 4px;"></i>
-                  Official Mandi APMC Benchmark (Database Auto-Calculated)
-                </span>
-                <span id="mandiLiveTag" style="font-size: 0.75rem; background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Agmarknet WB Live</span>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px;" id="mandiBenchmarkStats">
-                <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div style="font-size: 0.72rem; color: #64748b;" id="mandiModalLabel">Mandi Modal Price</div>
-                  <strong id="liveMandiModalPrice" style="color: #0f172a; font-size: 1rem;">₹15.00/kg</strong>
-                </div>
-                <div style="background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                  <div style="font-size: 0.72rem; color: #64748b;" id="mandiRetailLabel">Est. City Retail Rate</div>
-                  <strong id="liveEstimatedRetailPrice" style="color: #475569; font-size: 1rem;">₹24.00/kg</strong>
-                </div>
-                <div style="background: #ecfdf5; padding: 8px; border-radius: 6px; border: 1px solid #a7f3d0;">
-                  <div style="font-size: 0.72rem; color: #065f46;" id="mandiAdvantageLabel">Farmer Direct Advantage</div>
-                  <strong id="liveFarmerGainBadge" style="color: #047857; font-size: 1rem;">+25% Direct</strong>
-                </div>
-              </div>
-              <p id="mandiSourceInfo" style="margin: 8px 0 0 0; font-size: 0.75rem; color: #475569; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;">
-                <span><span id="mandiMarketLabel">Market:</span> <strong id="liveMandiName">Singur Regulated Market APMC</strong></span>
-                <span id="liveConsumerSavingsText" style="color: #15803d; font-weight: 600;">Consumer saves 31% vs street retail</span>
-              </p>
-            </div>
-
-            <div class="form-row-2">
-              <div class="form-field">
-                <label id="labelDistrict">Production District</label>
-                <select id="cropDistrict">
-                  <option value="Hooghly">Hooghly (Singur / Tarakeswar)</option>
-                  <option value="Nadia">Nadia (Ranaghat / Bethuadahari)</option>
-                  <option value="Purba Bardhaman">Purba Bardhaman (Memari / Kalna)</option>
-                  <option value="Malda">Malda (English Bazar)</option>
-                  <option value="Murshidabad">Murshidabad</option>
-                  <option value="Darjeeling">Darjeeling</option>
-                  <option value="South 24 Parganas">South 24 Parganas (Baruipur / Canning)</option>
-                  <option value="North 24 Parganas">North 24 Parganas (Barasat / Habra)</option>
-                  <option value="Bankura">Bankura (Kotulpur)</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label id="labelDescription">Crop Description &amp; Organic Certification</label>
-                <input type="text" id="cropDescription" placeholder="e.g. Freshly dug unwashed alluvial soil potatoes, zero pesticides" />
-              </div>
-            </div>
-
-            <!-- Warehouse Storage Damage All Risks Insurance Cover (Policy & Claim Safeguard) -->
-            <div class="crop-insurance-box" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%); border: 1.5px solid #86efac; border-radius: 10px; padding: 14px 16px; margin: 14px 0 16px 0; box-shadow: 0 2px 6px rgba(22, 163, 74, 0.06);">
-              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 260px;">
-                  <input type="checkbox" id="cropInsuranceOptIn" checked style="width: 18px; height: 18px; accent-color: #16a34a; margin-top: 3px; cursor: pointer;" onchange="toggleInsuranceDetails(this.checked)" />
-                  <div>
-                    <label for="cropInsuranceOptIn" style="font-size: 13.5px; font-weight: 700; color: #0f172a; cursor: pointer; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                      <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #16a34a;"></i>
-                      <span>Warehouse Storage All Risks Insurance Cover (গুদামজাত শস্য বীমা)</span>
-                      <span style="background: #dcfce7; color: #15803d; font-size: 10.5px; font-weight: 800; padding: 1px 7px; border-radius: 999px; text-transform: uppercase;">Zero Upfront Premium</span>
-                    </label>
-                    <p style="margin: 4px 0 0; font-size: 12px; color: #475569; line-height: 1.45;">
-                      Protects your harvest lot against fortuitous physical loss or damage while stored in the warehouse: 
-                      <strong>Clause 21 Spoilage Cover</strong> (cooling breakdown, humidity failure, water leakage) &amp; 
-                      <strong>Clause 22 Claim Protection</strong> (fire, explosion, pest infestation, transit damage).
-                    </p>
-                  </div>
-                </div>
-                <button type="button" onclick="openFarmerInsuranceModal()" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; font-size: 11.5px; font-weight: 700; color: #15803d; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
-                  <i data-lucide="file-text" style="width: 13px; height: 13px;"></i> View Policy &amp; Claims
+                <button type="button" onclick="openFarmerInsuranceModal()" style="background: white; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px 10px; font-size: 11.5px; font-weight: 700; color: #15803d; cursor: pointer;">
+                  View Policy &amp; Claims &rarr;
                 </button>
               </div>
-
-              <!-- Insurance Coverage Dynamic Summary Details -->
-              <div id="cropInsuranceDetailsPanel" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #bbf7d0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 11.5px; color: #334155;">
-                <div>
-                  <span style="color: #64748b;">Estimated Sum Insured:</span> 
-                  <strong id="insuranceSumInsuredPreview" style="color: #0f172a;">₹9,250.00</strong> (Batch &times; Farm Gate Price)
-                </div>
-                <div>
-                  <span style="color: #64748b;">Statutory Policy:</span> 
-                  <strong style="color: #16a34a;">Archived in Documents Folder</strong>
-                </div>
-                <div>
-                  <span style="color: #64748b;">Direct Claims Sync:</span> 
-                  <strong style="color: #15803d;">MongoDB <code>insurancerefunds</code> Active</strong>
-                </div>
-              </div>
             </div>
 
-            <button type="submit" class="btn-submit-green" id="btnPublishCrop">Publish Directly to Live Store</button>
+            <button type="submit" class="btn-submit-green" id="btnPublishCrop" style="width: 100%; padding: 12px; font-size: 15px; font-weight: 800; border-radius: 8px;">
+              Publish Harvest Directly to Live Store
+            </button>
           </form>
         </div>
 

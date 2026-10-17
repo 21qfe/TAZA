@@ -22,9 +22,16 @@ from app.schemas.farmer import (
     HarvestVolumeBreakdown,
     CropPerformanceItem,
     FarmerHarvestAnalyticsResponse,
+    PricePredictionRequest,
+    PricePredictionResponse,
 )
 from app.services.pricing_freshness_service import pricing_freshness_service
 from app.services.notification_service import notification_service
+from app.services.price_predictor_service import (
+    get_price_prediction,
+    predict_crop_price_enriched,
+    get_predictor_options,
+)
 
 router = APIRouter(prefix="/farmers", tags=["Farmers & FPOs"])
 
@@ -572,5 +579,60 @@ async def get_farmer_harvest_analytics(
         ),
         crop_listings=listings_items
     )
+
+
+@router.get("/predict-price/options")
+async def get_price_predictor_metadata():
+    """
+    Returns valid dropdown options (crops, divisions, districts, markets,
+    market_types, quality_grades, seasons, stock_availability) from the trained
+    ML model bundle (`mdeol1.pkl` / `crop_price_model.pkl`).
+    """
+    return get_predictor_options()
+
+
+@router.post("/predict-price", response_model=PricePredictionResponse)
+async def predict_crop_price_post(payload: PricePredictionRequest):
+    """
+    Predicts Min Price, Max Price, and Optimal Selling Price (in INR/Quintal and INR/kg)
+    using the trained `mdeol1.pkl` (`crop_price_model.pkl`) Random Forest pipeline.
+    """
+    return predict_crop_price_enriched(
+        crop=payload.crop,
+        division=payload.division,
+        district=payload.district,
+        market=payload.market,
+        market_type=payload.market_type,
+        quality_grade=payload.quality_grade,
+        season=payload.season,
+        stock_availability=payload.stock_availability,
+    )
+
+
+@router.get("/predict-price", response_model=PricePredictionResponse)
+async def predict_crop_price_get(
+    crop: str = "Rice",
+    division: Optional[str] = None,
+    district: Optional[str] = "Hooghly",
+    market: Optional[str] = None,
+    market_type: Optional[str] = "Wholesale",
+    quality_grade: str = "Grade A",
+    season: Optional[str] = None,
+    stock_availability: str = "Medium",
+):
+    """
+    GET endpoint for predicting Min Price, Max Price, and Selling Price using `mdeol1.pkl` (`crop_price_model.pkl`).
+    """
+    return predict_crop_price_enriched(
+        crop=crop,
+        division=division,
+        district=district,
+        market=market,
+        market_type=market_type,
+        quality_grade=quality_grade,
+        season=season,
+        stock_availability=stock_availability,
+    )
+
 
 
