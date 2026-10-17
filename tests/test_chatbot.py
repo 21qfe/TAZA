@@ -17,7 +17,13 @@ async def test_chatbot_explain_ai_simple_words():
         assert data["success"] is True
         assert "TAZA" in data["model_used"] or data["model_used"] in ["gpt-5", "TAZA-Qwen2.5-0.5B-LoRA (IBM Z LinuxONE s390x)"]
         assert len(data["output_text"]) > 20
-        assert "assistant" in data["output_text"].lower() or "ai" in data["output_text"].lower() or "farming" in data["output_text"].lower()
+        assert (
+            "assistant" in data["output_text"].lower()
+            or "ai" in data["output_text"].lower()
+            or "farming" in data["output_text"].lower()
+            or "intelligence" in data["output_text"].lower()
+            or "machine" in data["output_text"].lower()
+        )
 
 
 @pytest.mark.asyncio

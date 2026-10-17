@@ -17,3 +17,5 @@ Thumbs.db
 htmlcov/  
 *.log
 *.pkl
+cloudflared.exe
+*.exe

@@ -22,7 +22,7 @@ from app.services.price_predictor_service import predict_crop_price_enriched, SU
 
 router = APIRouter(prefix="/chatbot", tags=["TAZA AI Chatbot & Task Automation"])
 
-IBM_Z_API_URL = os.getenv("IBM_Z_API_URL", "http://127.0.0.1:8001")
+IBM_Z_API_URL = os.getenv("IBM_Z_API_URL", "https://believed-valid-washing-statute.trycloudflare.com")
 KEY_PATH = os.getenv("IBM_Z_SSH_KEY", r"C:\Users\MILIND GANGULY\Downloads\key1.pem")
 SSH_HOST = os.getenv("IBM_Z_SSH_HOST", "148.100.109.230")
 SSH_USER = os.getenv("IBM_Z_SSH_USER", "linux1")
@@ -222,10 +222,10 @@ async def process_chat_message(
     if not ai_text and not is_task_request:
         ensure_ibm_z_tunnel()
         try:
-            async with httpx.AsyncClient(timeout=4.0) as client:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.post(
                     f"{IBM_Z_API_URL}/",
-                    json={"query": user_input, "max_tokens": 40}
+                    json={"query": user_input, "max_tokens": 30}
                 )
                 if resp.status_code == 200:
                     resp_json = resp.json()
