@@ -1922,6 +1922,17 @@ function switchRole(role) {
       consumerNavSearch.style.setProperty("display", "none", "important");
     }
 
+    // Strictly remove TazaTalks AI floating button & chat window from Farmer's end
+    const tazaTalksBtn = document.getElementById("tazaTalksFloatingTrigger");
+    if (tazaTalksBtn) {
+      tazaTalksBtn.style.setProperty("display", "none", "important");
+    }
+    const tazaTalksWin = document.getElementById("tazaTalksChatWindow");
+    if (tazaTalksWin) {
+      tazaTalksWin.classList.remove("open");
+      tazaTalksWin.style.setProperty("display", "none", "important");
+    }
+
     if (subNav) {
       subNav.querySelectorAll(".subnav-consumer-item").forEach(el => el.style.display = "none");
       subNav.querySelectorAll(".subnav-farmer-item").forEach(el => el.style.display = "inline-flex");
@@ -1940,6 +1951,16 @@ function switchRole(role) {
     const consumerNavSearch = document.getElementById("consumerNavSearch");
     if (consumerNavSearch) {
       consumerNavSearch.style.removeProperty("display");
+    }
+
+    // Restore TazaTalks AI floating trigger for Consumer end
+    const tazaTalksBtn = document.getElementById("tazaTalksFloatingTrigger");
+    if (tazaTalksBtn) {
+      tazaTalksBtn.style.removeProperty("display");
+    }
+    const tazaTalksWin = document.getElementById("tazaTalksChatWindow");
+    if (tazaTalksWin) {
+      tazaTalksWin.style.removeProperty("display");
     }
 
     if (consumerSection) {
@@ -5565,6 +5586,19 @@ function initTazaTalks() {
   tazaTalksInitialized = true;
   tazaTalksCurrentRole = currentRole || "consumer";
   setTazaTalksRole(tazaTalksCurrentRole, false);
+
+  const trigger = document.getElementById("tazaTalksFloatingTrigger");
+  const win = document.getElementById("tazaTalksChatWindow");
+  if (currentRole === "farmer") {
+    if (trigger) trigger.style.setProperty("display", "none", "important");
+    if (win) {
+      win.classList.remove("open");
+      win.style.setProperty("display", "none", "important");
+    }
+  } else {
+    if (trigger) trigger.style.removeProperty("display");
+    if (win) win.style.removeProperty("display");
+  }
 
   const container = document.getElementById("tazaTalksMessages");
   if (container && container.children.length === 0) {

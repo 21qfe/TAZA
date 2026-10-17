@@ -2893,6 +2893,16 @@ html, body {
 /* ==============================================================
    TAZATALKS AI DUAL-ROLE CHATBOT WIDGET STYLES
    ============================================================== */
+/* Strictly hide TazaTalks AI on Farmer's End */
+body.farmer-mode #tazaTalksFloatingTrigger,
+body.farmer-mode .tazatalks-floating-btn,
+body.farmer-mode #tazaTalksChatWindow,
+body.farmer-mode .tazatalks-chat-window {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .tazatalks-floating-btn {
   position: fixed;
   bottom: 24px;
