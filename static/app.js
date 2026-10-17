@@ -9316,6 +9316,18 @@ function handleClientSideAutonomousTask(query) {
     return;
   }
 
+  // MANGO CULTIVATION & VIABLE CONDITIONS
+  if (q.includes("mango") || q.includes("aam") || q.includes("himsagar") || q.includes("আম") || q.includes("fazli") || q.includes("amrapali")) {
+    appendTaza2Message("bot", `<strong>Viable Conditions for Mango (Himsagar & Amrapali) Cultivation:</strong><br><br>• <strong>Climate & Temperature:</strong> 24°C–30°C. Requires dry, warm weather during flowering (Jan–March) to ensure insect pollination and avoid powdery mildew.<br>• <strong>Soil & Drainage:</strong> Deep, well-drained alluvial or sandy-loam soils with pH 5.5–7.5. Avoid waterlogged heavy clays.<br>• <strong>Irrigation:</strong> Withhold water in Nov–Dec to induce flowering, then resume at 10–14 day intervals after fruit set.<br>• <strong>Pest Management:</strong> Spray Imidacloprid 17.8% SL (0.3ml/L) against mango hoppers at panicle emergence.<br>• <strong>TAZA Cold Vaults:</strong> Pre-book cold vault space (10°C–12°C, 85% RH) in Malda or Singur Hubs. Type <em>"List 300kg mango at ₹65"</em> to sell directly with zero middleman deductions!`, true);
+    return;
+  }
+
+  // DYNAMIC VIABLE CONDITIONS SYNTHESIZER
+  if (q.includes("viable condition") || q.includes("growing condition") || q.includes("how to grow") || q.includes("soil condition") || q.includes("climate") || q.includes("cultivation")) {
+    appendTaza2Message("bot", `<strong>Agronomic Cultivation & Viable Conditions Advisory:</strong><br><br>• <strong>Agro-Climatic Fit:</strong> West Bengal alluvial plains with 1,200–1,600 mm rainfall support robust horticultural yields.<br>• <strong>Soil Health:</strong> Well-drained sandy loam to silty clay loam with pH 6.0–7.2.<br>• <strong>Irrigation & Drainage:</strong> Ridge-and-furrow planting protects against root rot during heavy spells.<br>• <strong>Market Guarantee:</strong> Anchor your produce with TAZA's automated MSP floor price guarantee!`, true);
+    return;
+  }
+
   // I. Conversational Farm AI Fallback
   const defaultReply = `I've received your query regarding <strong>"${escapeHtml(query)}"</strong>. As your TAZA Agricultural Copilot for Hooghly, I'm here to provide crop management advice, live APMC Mandi insights, or immediately automate your farm workflows. You can ask me specific questions like <em>"How to control potato blight?"</em>, <em>"Today's Singur mandi rate"</em>, or give a command like <em>"List 500kg at ₹20"</em> to automatically publish your produce to our marketplace.`;
 

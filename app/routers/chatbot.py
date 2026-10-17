@@ -855,6 +855,80 @@ def generate_expert_farm_response(query: str, role: str, mode: str, district: st
             "4. **Mechanical Control**: Prune and deeply bury wilted terminal shoots weekly."
         )
 
+    # 10. Mango Cultivation & Viable Growing Conditions (Himsagar, Langra, Amrapali, Fazli)
+    if any(k in q for k in ["mango", "aam", "আম", "himsagar", "langra", "fazli", "amrapali"]):
+        return (
+            "**Viable Conditions for Mango (Himsagar & Amrapali) Cultivation in West Bengal:**\n\n"
+            "1. **Climate & Temperature**:\n"
+            "   • Optimal temperature: **24°C to 30°C**. Mango thrives in tropical and subtropical climates.\n"
+            "   • **Flowering Season (Jan–March)**: Requires warm, bright sunshine and dry weather. Fog, cloudy skies, or unseasonal rains during flowering disrupt pollinating insects and trigger powdery mildew.\n\n"
+            "2. **Soil & Drainage**:\n"
+            "   • Deep, well-drained alluvial or sandy-loam soils with pH between **5.5 and 7.5**.\n"
+            "   • Requires deep rooting depth (at least 2 meters). Highly sensitive to waterlogging; avoid heavy clay soils with poor subsoil drainage.\n\n"
+            "3. **Rainfall & Water Management**:\n"
+            "   • Annual rainfall: **750 mm to 1,500 mm**.\n"
+            "   • Withhold irrigation during Nov–Dec to induce vegetative dormancy and flower bud differentiation.\n"
+            "   • Resume irrigation at 10–14 day intervals once pea-sized fruit set begins in March.\n\n"
+            "4. **West Bengal Varieties**:\n"
+            "   • **Himsagar (Malda/Murshidabad GI)**: Renowned thin skin, fiberless sweet pulp, matures May–June.\n"
+            "   • **Langra & Lakshmanbhog**: High commercial demand across Kolkata wholesale mandis.\n"
+            "   • **Amrapali**: Regular bearing dwarf hybrid, ideal for high-density planting (5m × 5m).\n\n"
+            "5. **Pest & Disease Control**:\n"
+            "   • **Mango Hopper (ভেসো পোকা)**: Spray **Imidacloprid 17.8% SL** @ 0.3ml/L at panicle emergence.\n"
+            "   • **Anthracnose & Powdery Mildew**: Spray **Carbendazim 12% + Mancozeb 63%** @ 2g/L or **Hexaconazole 5% EC** @ 1ml/L.\n\n"
+            "6. **TAZA Cold Vault & Farmgate Dispatch**:\n"
+            "   • Store harvested mangoes at **10°C–12°C with 85%–90% RH** in Malda English Bazar or Singur Vaults.\n"
+            "   • You can type *'List 300kg mango at ₹65'* to lock your harvest with dynamic Mandi arbitrage and EV green corridor dispatch!"
+        )
+
+    # 11. Pointed Gourd / Potol (Swarna Alaukik)
+    if any(k in q for k in ["potol", "pointed gourd", "পটল"]):
+        return (
+            "**Pointed Gourd (Potol / Swarna Alaukik) Cultivation Guide:**\n\n"
+            "• **Soil & Climate**: Sandy-loam riverbed soils (Diyara land) along Damodar or Hooghly rivers. Warm, humid climate with 30°C–35°C temperature.\n"
+            "• **Male-to-Female Ratio**: Pointed gourd is dioecious; maintain a 1:9 male-to-female plant ratio in the field to ensure effective insect pollination.\n"
+            "• **Vine Training**: Train vines on low-cost bamboo trellises (Macha) to keep fruits clean and disease-free.\n"
+            "• **Fruit Fly Management**: Hang Methyl Eugenol pheromone traps @ 6 per acre."
+        )
+
+    # 12. Jute / Golden Fiber (JRO-524 / Tossa Jute)
+    if any(k in q for k in ["jute", "pat", "পাট"]):
+        return (
+            "**Tossa Jute (JRO-524) Cultivation & Retting Standards:**\n\n"
+            "• **Sowing Time**: Mid-March to April with pre-monsoon showers.\n"
+            "• **Soil**: Alluvial, fertile loamy soil in Gangetic plains with high water retention.\n"
+            "• **Retting Water**: Slow-moving, clean, soft water with **CRIJAF Sona microbial consortium** to reduce retting time from 21 days to 12 days, giving golden, lustrous fiber."
+        )
+
+    # 13. Mustard / Sarson (B-9 / Sarama)
+    if any(k in q for k in ["mustard", "sarson", "সরিষা"]):
+        return (
+            "**Yellow Mustard (B-9 / Sarama) Cultivation Guide:**\n\n"
+            "• **Sowing Window**: Mid-October to mid-November immediately after Kharif paddy harvest.\n"
+            "• **Aphid Management (জাব পোকা)**: Inspect underleaves in foggy weather. Spray **Dimethoate 30% EC** @ 1.5ml/L or **Thiamethoxam 25% WG** @ 0.3g/L when population exceeds 10 aphids/plant.\n"
+            "• **Irrigation**: Two critical irrigations—first at pre-flowering (25–30 days) and second at siliqua development (50–55 days)."
+        )
+
+    # 14. Tomato (Abhinav Hybrid)
+    if any(k in q for k in ["tomato", "টমেটো"]):
+        return (
+            "**Hybrid Tomato Cultivation Standards in West Bengal:**\n\n"
+            "• **Climate**: Mild winter temperature of 18°C–25°C. High night temperatures (>22°C) cause blossom drop.\n"
+            "• **Bacterial Wilt Management**: Plant resistant varieties like **Arka Rakshak** or **Abhinav**. Drench root zone with **Streptocycline** (1g/10L) + Copper Oxychloride (2.5g/L).\n"
+            "• **Staking**: Stake indeterminate plants with bamboo poles at 30 days to maximize Grade-A fruit realization."
+        )
+
+    # 15. Dynamic Viable Growing Conditions Synthesizer for Any Crop
+    if any(k in q for k in ["viable condition", "growing condition", "how to grow", "soil condition", "climate", "temperature", "cultivation of", "চাষ পদ্ধতি"]):
+        return (
+            f"**Agronomic Cultivation & Viable Conditions Advisory for West Bengal:**\n\n"
+            f"Regarding your query on **'{query}'**:\n"
+            "1. **Agro-Climatic Fit**: West Bengal's fertile alluvial plains provide high organic carbon content and 1,200–1,600 mm annual rainfall, highly suited for horticultural and cash crops.\n"
+            "2. **Soil Health**: Well-drained sandy loam to silty clay loam with pH 6.0–7.2. Test soil organic carbon every 2 seasons.\n"
+            "3. **Irrigation Strategy**: Adopt ridge-and-furrow or drip irrigation to conserve water and prevent collar rot fungal infections.\n"
+            "4. **Post-Harvest Protection**: Connect with nearby Singur Hub cold vaults and lock your price with TAZA's automated MSP floor price guarantee."
+        )
+
     # 10. Fertilizers & Soil Health
     if any(k in q for k in ["fertilizer", "npk", "urea", "dap", "potash", "সার", "মাটি", "soil"]):
         return (
