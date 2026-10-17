@@ -36,7 +36,7 @@
     </div>
   </aside>
 
-  <!-- 2. PRIMARY COMMERCIAL HEADER (Only TAZA Brand & Language Filter) -->
+  <!-- 2. PRIMARY COMMERCIAL HEADER (TAZA Brand, Consumer Search Bar & Language Filter) -->
   <header class="main-header">
     <!-- Brand Logo -->
     <div class="nav-left">
@@ -47,6 +47,20 @@
           <span class="logo-domain">.in</span>
         </div>
       </div>
+    </div>
+
+    <!-- Consumer-Only Search Bar (Strictly Consumer End Only) -->
+    <div class="nav-search consumer-only" id="consumerNavSearch">
+      <select id="searchCategory" class="search-dropdown" onchange="filterCategory(this.value)" title="Filter Category">
+        <option value="all">All Crops</option>
+        <option value="VEGETABLES">Vegetables</option>
+        <option value="FRUITS">Fruits</option>
+        <option value="GRAINS_PADDY">Grains &amp; Rice</option>
+        <option value="TUBERS">Tubers &amp; Potatoes</option>
+        <option value="SPICES">Spices</option>
+      </select>
+      <input type="text" id="globalSearchInput" placeholder="Search direct farm produce: 'Singur Potato', 'Gobindobhog', 'Tomato'..." oninput="handleSearchInput(this.value)" onkeydown="if(event.key === 'Enter') triggerSearch()" />
+      <button type="button" class="search-submit" onclick="triggerSearch()" aria-label="Search Produce" title="Search produce"><i data-lucide="search"></i></button>
     </div>
 
     <!-- Right Controls: Language Filter Only -->
@@ -66,15 +80,6 @@
     <div style="display: none !important;" aria-hidden="true">
       <div id="navDeliveryHeader">Delivering to Kolkata 700001</div>
       <div id="navDeliveryDistrict">Bengal Agricultural Corridor</div>
-      <select id="searchCategory">
-        <option value="all">All Crops</option>
-        <option value="VEGETABLES">Vegetables</option>
-        <option value="FRUITS">Fruits</option>
-        <option value="GRAINS_PADDY">Grains & Rice</option>
-        <option value="TUBERS">Tubers & Potatoes</option>
-        <option value="SPICES">Spices</option>
-      </select>
-      <input type="text" id="globalSearchInput" placeholder="Search direct farm produce..." />
       <div id="navAccountTray" onclick="handleNavAccountClick()">
         <span id="navUserGreeting">Hello, Sourav</span>
         <span id="navUserRole">Sign In / Hub</span>

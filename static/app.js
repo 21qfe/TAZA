@@ -1916,7 +1916,12 @@ function switchRole(role) {
         : `Farmer Hub <i data-lucide="refresh-cw" style="width:11px;height:11px;display:inline-block;margin-left:2px;"></i>`;
     }
 
-    // In farmer account: hide consumer commercial categories while keeping AI Smart Logistics Engine intact & accessible!
+    // In farmer account: hide consumer commercial categories & search bar while keeping AI Smart Logistics Engine intact & accessible!
+    const consumerNavSearch = document.getElementById("consumerNavSearch");
+    if (consumerNavSearch) {
+      consumerNavSearch.style.setProperty("display", "none", "important");
+    }
+
     if (subNav) {
       subNav.querySelectorAll(".subnav-consumer-item").forEach(el => el.style.display = "none");
       subNav.querySelectorAll(".subnav-farmer-item").forEach(el => el.style.display = "inline-flex");
@@ -1932,6 +1937,11 @@ function switchRole(role) {
     }
   } else {
     document.body.classList.remove("farmer-mode");
+    const consumerNavSearch = document.getElementById("consumerNavSearch");
+    if (consumerNavSearch) {
+      consumerNavSearch.style.removeProperty("display");
+    }
+
     if (consumerSection) {
       consumerSection.classList.add("active");
       consumerSection.style.display = "block";
@@ -2146,6 +2156,18 @@ async function fetchCatalog() {
   } catch (err) {
     console.warn("Failed to fetch from API, loading fallback products", err);
     products = FALLBACK_PRODUCTS;
+    if (currentFilter !== 'all') {
+      products = products.filter(p => p.category === currentFilter);
+    }
+    if (currentSearchQuery.trim()) {
+      const sq = currentSearchQuery.trim().toLowerCase();
+      products = products.filter(p =>
+        (p.crop_name && p.crop_name.toLowerCase().includes(sq)) ||
+        (p.name && p.name.toLowerCase().includes(sq)) ||
+        (p.category && p.category.toLowerCase().includes(sq)) ||
+        (p.district && p.district.toLowerCase().includes(sq))
+      );
+    }
   }
 
   renderProducts(products);
@@ -2345,6 +2367,9 @@ function triggerSearch() {
   const val = searchInp ? searchInp.value : '';
   currentSearchQuery = val;
   fetchCatalog();
+  if (typeof scrollToProducts === 'function') {
+    scrollToProducts();
+  }
 }
 
 function handleSort(criteria) {

@@ -126,7 +126,7 @@ body {
   color: #ffffff;
 }
 
-/* Central Search Bar */
+/* Central Search Bar (Consumer End Only) */
 .nav-search {
   flex-grow: 1;
   display: flex;
@@ -134,15 +134,21 @@ body {
   border-radius: var(--radius-sm);
   overflow: hidden;
   background-color: #ffffff;
+  max-width: 650px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.2s, outline 0.2s;
+}
+.nav-search:focus-within {
+  box-shadow: 0 0 0 2.5px var(--amazon-yellow);
 }
 .search-dropdown {
-  background-color: #f3f3f3;
+  background-color: #f3f4f6;
   border: none;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid #d1d5db;
   padding: 0 10px;
   font-size: 12px;
   font-weight: 600;
-  color: #333;
+  color: #1f2937;
   outline: none;
   cursor: pointer;
 }
@@ -152,6 +158,11 @@ body {
   padding: 0 12px;
   font-size: 14px;
   outline: none;
+  color: #111827;
+}
+.nav-search input::placeholder {
+  color: #9ca3af;
+  font-size: 13px;
 }
 .search-submit {
   background-color: var(--amazon-yellow);
@@ -167,6 +178,15 @@ body {
 .search-submit:hover {
   background-color: var(--amazon-yellow-hover);
 }
+
+/* Strictly prevent search bar from carrying forward into Farmer's Portal */
+body.farmer-mode .nav-search,
+body.farmer-mode #consumerNavSearch,
+body.farmer-mode .consumer-only,
+#farmerView .nav-search {
+  display: none !important;
+}
+
 
 /* Nav Right & Role Switcher */
 .nav-right {
