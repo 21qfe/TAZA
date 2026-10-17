@@ -229,16 +229,20 @@ async def process_chat_message(
     if not ai_text and not is_task_request:
         ensure_ibm_z_tunnel()
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=15.0) as client:
                 resp = await client.post(
                     f"{IBM_Z_API_URL}/",
-                    json={"query": user_input, "max_tokens": 30}
+                    json={"query": user_input, "max_tokens": 75}
                 )
                 if resp.status_code == 200:
                     resp_json = resp.json()
                     if resp_json.get("success"):
                         raw_output = resp_json.get("response", "")
                         ai_text = sanitize_phone_and_contact(raw_output)
+                        # Ensure clean sentence completion
+                        last_punct = max(ai_text.rfind('.'), ai_text.rfind('!'), ai_text.rfind('?'), ai_text.rfind('\n'))
+                        if last_punct > 40:
+                            ai_text = ai_text[:last_punct + 1].strip()
                         model_used = resp_json.get("model", "TAZA-Qwen2.5-0.5B-LoRA (IBM Z LinuxONE s390x)")
                         api_status = "live_ibm_z_s390x"
                         _AGRI_RESPONSE_CACHE[cache_key] = {"text": ai_text, "model": model_used}
