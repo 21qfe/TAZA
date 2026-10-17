@@ -7046,6 +7046,23 @@ body.farmer-mode {
   line-height: 1.6;
 }
 
+.taza2-bubble p {
+  margin: 0 0 6px 0;
+}
+
+.taza2-bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.taza2-bubble strong {
+  color: #34d399;
+  font-weight: 600;
+}
+
+.taza2-msg.user .taza2-bubble strong {
+  color: #ffffff;
+}
+
 .taza2-msg.bot .taza2-bubble {
   background: rgba(15, 28, 20, 0.85);
   border: 1px solid rgba(16, 185, 129, 0.25);

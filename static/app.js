@@ -5337,7 +5337,7 @@ async function processTazaTalksQuery(query) {
 
     if (res.ok) {
       const data = await res.json();
-      let botHtml = `<p>${escapeHtml(data.output_text)}</p>`;
+      let botHtml = formatBotResponse(data.output_text);
       if (data.automated_task && data.automated_task.html_card) {
         botHtml += data.automated_task.html_card;
         if (typeof applyAutomatedListingToFrontend === "function") {
@@ -5494,6 +5494,33 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function formatBotResponse(text) {
+  if (!text) return "";
+  
+  // 1. Clean HTML entity escaping
+  let formatted = escapeHtml(text);
+  
+  // 2. Convert markdown bold **text** to <strong>text</strong>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  
+  // 3. Convert markdown italic *text* or _text_ to <em>text</em>
+  formatted = formatted.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+  
+  // 4. Strip any remaining stray asterisks so no raw ** or * remains
+  formatted = formatted.replace(/\*\*/g, "");
+  
+  // 5. Convert bullet points or numbers into structured breaks
+  formatted = formatted.replace(/(?:\r?\n)[ \t]*[•\-\*][ \t]+(.*)/g, "<br>• $1");
+  formatted = formatted.replace(/(?:\r?\n)[ \t]*(\d+\.)[ \t]+(.*)/g, "<br><strong>$1</strong> $2");
+  
+  // 6. Convert double linebreaks into clean paragraph breaks
+  formatted = formatted.replace(/\r\n/g, "\n");
+  formatted = formatted.replace(/\n\n+/g, "</p><p style=\"margin-top: 8px;\">");
+  formatted = formatted.replace(/\n/g, "<br>");
+  
+  return `<p>${formatted}</p>`;
 }
 
 function clearTazaTalksChat() {
@@ -8854,7 +8881,7 @@ function appendTaza2Message(role, content, isHtml = false) {
   if (isHtml) {
     bubble.innerHTML = content;
   } else {
-    bubble.innerText = content;
+    bubble.innerHTML = formatBotResponse(content);
   }
 
   msgDiv.appendChild(avatar);
@@ -9007,7 +9034,7 @@ async function processTaza2Query(query) {
 
     if (res.ok) {
       const data = await res.json();
-      let botHtml = `<p>${escapeHtml(data.output_text)}</p>`;
+      let botHtml = formatBotResponse(data.output_text);
 
       if (data.automated_task && data.automated_task.html_card) {
         botHtml += data.automated_task.html_card;
@@ -9319,6 +9346,18 @@ function handleClientSideAutonomousTask(query) {
   // MANGO CULTIVATION & VIABLE CONDITIONS
   if (q.includes("mango") || q.includes("aam") || q.includes("himsagar") || q.includes("আম") || q.includes("fazli") || q.includes("amrapali")) {
     appendTaza2Message("bot", `<strong>Viable Conditions for Mango (Himsagar & Amrapali) Cultivation:</strong><br><br>• <strong>Climate & Temperature:</strong> 24°C–30°C. Requires dry, warm weather during flowering (Jan–March) to ensure insect pollination and avoid powdery mildew.<br>• <strong>Soil & Drainage:</strong> Deep, well-drained alluvial or sandy-loam soils with pH 5.5–7.5. Avoid waterlogged heavy clays.<br>• <strong>Irrigation:</strong> Withhold water in Nov–Dec to induce flowering, then resume at 10–14 day intervals after fruit set.<br>• <strong>Pest Management:</strong> Spray Imidacloprid 17.8% SL (0.3ml/L) against mango hoppers at panicle emergence.<br>• <strong>TAZA Cold Vaults:</strong> Pre-book cold vault space (10°C–12°C, 85% RH) in Malda or Singur Hubs. Type <em>"List 300kg mango at ₹65"</em> to sell directly with zero middleman deductions!`, true);
+    return;
+  }
+
+  // RICE / PADDY SOIL, LAND PREPARATION & VIABLE CONDITIONS
+  if ((q.includes("rice") || q.includes("paddy") || q.includes("dhan") || q.includes("ধান")) && (q.includes("soil") || q.includes("মাটি") || q.includes("clay") || q.includes("loam") || q.includes("mati") || q.includes("ph") || q.includes("puddling"))) {
+    appendTaza2Message("bot", `<strong>Ideal Soil Requirements & Land Preparation for Rice (Paddy) in West Bengal:</strong><br><br>• <strong>Soil Texture & Type:</strong> Heavy clay, clay-loam, or silty clay soils with high water retention capacity and low percolation rate are ideal to sustain required standing water (5–8 cm).<br>• <strong>Optimum pH Range:</strong> Soil pH between <strong>5.5 and 6.5</strong> (slightly acidic to neutral) provides maximum nutrient bioavailability, though rice tolerates a wider range of 5.0 to 8.0.<br>• <strong>Organic Matter:</strong> Deep alluvial soils rich in organic carbon and humus (typical of Gangetic plains in Hooghly and Burdwan) maximize grain yield and tillering.<br>• <strong>Puddling (Wet Tillage):</strong> Plough 2–3 times in 5–10 cm standing water to break soil clods and form an impermeable subsoil hardpan at 15–20 cm depth to minimize percolation loss.<br>• <strong>Basal Amendments:</strong> Incorporate well-decomposed Farmyard Manure (FYM) @ 4–5 tonnes/acre during final puddling, plus Zinc Sulphate (21%) @ 10 kg/acre.`, true);
+    return;
+  }
+
+  // POTATO SOIL & HEALTH
+  if ((q.includes("potato") || q.includes("alu") || q.includes("আলু")) && (q.includes("soil") || q.includes("মাটি") || q.includes("mati") || q.includes("ph"))) {
+    appendTaza2Message("bot", `<strong>Ideal Soil Requirements for Potato (Jyoti & Chandramukhi) in West Bengal:</strong><br><br>• <strong>Soil Texture:</strong> Deep, loose, friable sandy-loam or silty-loam soil rich in organic matter. Loose texture allows unhindered stolon penetration and uniform tuber expansion.<br>• <strong>Soil pH:</strong> Optimal pH is <strong>5.2 to 6.4</strong>. Moderately acidic soil suppresses potato common scab.<br>• <strong>Drainage & Aeration:</strong> Highly sensitive to waterlogging. Heavy, compact clay soils restrict tuber development and promote bacterial soft rot.<br>• <strong>Soil Preparation:</strong> Deep ploughing (20–25 cm) followed by 2–3 harrowings. Incorporate well-rotted FYM @ 8–10 tonnes/acre 3 weeks before planting.`, true);
     return;
   }
 

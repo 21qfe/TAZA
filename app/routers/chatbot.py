@@ -836,13 +836,60 @@ def generate_expert_farm_response(query: str, role: str, mode: str, district: st
             "4. **Cold Storage Caution**: Discard affected tubers before vault storage to avoid bacterial soft rot."
         )
 
-    # 8. Rice / Paddy Management
-    if any(k in q for k in ["rice", "paddy", "dhan", "ধান", "gobindobhog", "swarna", "blast", "stem borer", "মাজরা"]):
+    # 8a. Rice / Paddy Soil, Land Preparation & Health
+    is_rice = any(k in q for k in ["rice", "paddy", "dhan", "ধান", "gobindobhog", "swarna", "minikit"])
+    is_soil_query = any(k in q for k in ["soil", "মাটি", "clay", "loam", "mati", "ph", "land preparation", "puddling", "কাদা"])
+    is_potato = any(k in q for k in ["potato", "alu", "আলু", "jyoti", "chandramukhi", "pokhraj"])
+
+    if is_potato and is_soil_query:
         return (
-            "**Paddy (Gobindobhog & Swarna) Cultivation & Pest Control:**\n\n"
-            "• **Yellow Stem Borer (মাজরা পোকা)**: Apply **Chlorantraniliprole 0.4% G** (Ferterra) @ 4 kg/acre or spray **Cartap Hydrochloride 50% SP** @ 2g/L during the tillering stage.\n"
+            "**Ideal Soil Requirements for Potato (Jyoti & Chandramukhi) in West Bengal:**\n\n"
+            "• **Soil Texture**: Deep, loose, friable sandy-loam or silty-loam soil rich in organic matter. Loose soil texture allows unhindered stolon penetration and uniform tuber expansion.\n"
+            "• **Soil pH**: Optimal pH is **5.2 to 6.4**. Moderately acidic soil suppresses potato common scab (Streptomyces scabies).\n"
+            "• **Drainage & Aeration**: Highly sensitive to waterlogging. Heavy, compact clay soils restrict tuber development, create misshapen tubers, and promote bacterial soft rot.\n"
+            "• **Soil Preparation**: Deep ploughing (20–25 cm) followed by 2–3 harrowings to achieve a fine crumbly tilth. Incorporate well-rotted FYM @ 8–10 tonnes/acre 3 weeks before planting."
+        )
+
+    if is_rice and is_soil_query:
+        return (
+            "**Ideal Soil Requirements & Land Preparation for Rice (Paddy) in West Bengal:**\n\n"
+            "• **Soil Texture & Type**: Heavy clay, clay-loam, or silty clay-loam soils with high water retention capacity and low percolation rate are ideal for paddy to sustain standing water (5–8 cm) throughout tillering.\n"
+            "• **Optimum pH Range**: Soil pH between **5.5 and 6.5** (slightly acidic to neutral) provides maximum nutrient bioavailability, though rice tolerates a wider range of 5.0 to 8.0.\n"
+            "• **Organic Carbon & Fertility**: Deep Gangetic alluvial soils with rich organic carbon (as found in Hooghly, Burdwan, and Nadia) promote vigorous root proliferation and tillering.\n"
+            "• **Puddling (Wet Tillage)**: Plough 2–3 times in 5–10 cm standing water to break up soil clods, churn weeds, and form an impermeable subsoil hardpan at 15–20 cm depth to minimize water percolation loss.\n"
+            "• **Basal Soil Amendment**: Incorporate well-decomposed Farmyard Manure (FYM) @ 4–5 tonnes/acre or green manure (Dhaincha) during final puddling, plus **Zinc Sulphate (21%)** @ 10 kg/acre to prevent Khaira disease."
+        )
+
+    # 8b. Rice / Paddy Climate & Viable Growing Conditions
+    is_climate_query = any(k in q for k in ["viable condition", "growing condition", "climate", "temperature", "water requirement", "rainfall", "চাষ পদ্ধতি", "how to grow"])
+    if is_rice and is_climate_query:
+        return (
+            "**Viable Growing Conditions for Rice (Paddy) in West Bengal:**\n\n"
+            "• **Temperature**: Requires warm, humid weather. Optimal daytime temperature for vegetative tillering is **25°C–32°C**; flowering and grain-filling thrive at **20°C–28°C**.\n"
+            "• **Rainfall & Water**: 1,150–1,500 mm rainfall or assured canal/borewell irrigation. Maintain 2–5 cm standing water during vegetative growth, draining 10–12 days prior to harvest.\n"
+            "• **Soil Type**: Fertile alluvial clay-loam with pH 5.5–6.5, high organic carbon, and a puddled hardpan to retain standing water.\n"
+            "• **Bengal Crop Seasons**: Aus (Autumn, sown May–June), Aman (Winter/Kharif, transplanted July–Aug — primary for Gobindobhog & Swarna), and Boro (Summer/Rabi, Dec–April).\n"
+            "• **Transplanting**: Transplant 21–25 day old seedlings at 20 cm × 15 cm spacing with 2–3 seedlings per hill."
+        )
+
+    # 8c. Rice / Paddy Pest & Disease Management
+    if any(k in q for k in ["blast", "stem borer", "মাজরা", "ব্লাস্ট", "sheath blight", "brown plant hopper", "bph"]) or (is_rice and any(k in q for k in ["pest", "disease", "insect", "পোকা", "রোগ", "treatment", "spray"])):
+        return (
+            "**Paddy (Gobindobhog & Swarna) Pest & Disease Management:**\n\n"
+            "• **Yellow Stem Borer (মাজরা পোকা)**: Apply **Chlorantraniliprole 0.4% G** (Ferterra) @ 4 kg/acre or spray **Cartap Hydrochloride 50% SP** @ 2g/L during the active tillering stage.\n"
             "• **Paddy Blast (ব্লাস্ট রোগ)**: Spray **Tricyclazole 75% WP** (Beam) @ 0.6g/L as soon as boat-shaped spindle spots appear on leaf blades.\n"
+            "• **Sheath Blight (ব্যান্ডেড ব্লাইট)**: Spray **Hexaconazole 5% EC** @ 2ml/L or **Validamycin 3% L** @ 2.5ml/L at water-level sheath lesions.\n"
             "• **Storage Safe Moisture**: Sun-dry paddy until moisture is between 12%–14% before warehouse bagging to avoid fungal discoloration."
+        )
+
+    # 8d. General Rice / Paddy Overview
+    if is_rice:
+        return (
+            "**Rice (Paddy) Cultivation & Farmgate Trading Guide in Hooghly:**\n\n"
+            "• **Key Bengal Varieties**: **Gobindobhog** (GI-tagged aromatic short grain, high premium @ ₹70–₹85/kg), **Swarna (MTU-7029)** (high-yielding Kharif staple), and **Minikit**.\n"
+            "• **Soil & Land Preparation**: Heavy clay-loam alluvial soil with pH 5.5–6.5; puddling creates an impermeable hardpan to hold standing water.\n"
+            "• **Balanced Nutrition (NPK)**: Apply **80:40:40 kg/ha** for Swarna and **60:30:30 kg/ha** for Gobindobhog. Split Nitrogen across basal, tillering, and panicle initiation.\n"
+            "• **TAZA Farmgate Advantage**: Connect directly with wholesale millers and retail buyers with zero middleman deductions. You can type *'List 400kg rice at ₹75'* to list your harvest immediately!"
         )
 
     # 9. Brinjal / Eggplant Pest Control
