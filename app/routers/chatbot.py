@@ -22,7 +22,7 @@ from app.services.price_predictor_service import predict_crop_price_enriched, SU
 
 router = APIRouter(prefix="/chatbot", tags=["TAZA AI Chatbot & Task Automation"])
 
-IBM_Z_API_URL = os.getenv("IBM_Z_API_URL", "https://wireless-bloom-naples-copyright.trycloudflare.com")
+IBM_Z_API_URL = os.getenv("IBM_Z_API_URL", "http://148.100.109.230:8001")
 KEY_PATH = os.getenv("IBM_Z_SSH_KEY", r"C:\Users\MILIND GANGULY\Downloads\key1.pem")
 SSH_HOST = os.getenv("IBM_Z_SSH_HOST", "148.100.109.230")
 SSH_USER = os.getenv("IBM_Z_SSH_USER", "linux1")
@@ -32,7 +32,9 @@ _AGRI_RESPONSE_CACHE: Dict[str, Dict[str, Any]] = {}
 
 
 def ensure_ibm_z_tunnel() -> bool:
-    """Ensures local port 8001 SSH tunnel to IBM Z LinuxONE is open."""
+    """Ensures local port 8001 SSH tunnel to IBM Z LinuxONE is open if targeting localhost."""
+    if "127.0.0.1" not in IBM_Z_API_URL and "localhost" not in IBM_Z_API_URL:
+        return True
     try:
         import socket
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -229,7 +231,7 @@ async def process_chat_message(
     if not ai_text and not is_task_request:
         ensure_ibm_z_tunnel()
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
+            async with httpx.AsyncClient(timeout=22.0) as client:
                 resp = await client.post(
                     f"{IBM_Z_API_URL}/",
                     json={"query": user_input, "max_tokens": 75}
