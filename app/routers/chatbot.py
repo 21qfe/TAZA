@@ -22,7 +22,7 @@ from app.services.price_predictor_service import predict_crop_price_enriched, SU
 
 router = APIRouter(prefix="/chatbot", tags=["TAZA AI Chatbot & Task Automation"])
 
-IBM_Z_API_URL = os.getenv("IBM_Z_API_URL", "https://believed-valid-washing-statute.trycloudflare.com")
+IBM_Z_API_URL = os.getenv("IBM_Z_API_URL", "https://wireless-bloom-naples-copyright.trycloudflare.com")
 KEY_PATH = os.getenv("IBM_Z_SSH_KEY", r"C:\Users\MILIND GANGULY\Downloads\key1.pem")
 SSH_HOST = os.getenv("IBM_Z_SSH_HOST", "148.100.109.230")
 SSH_USER = os.getenv("IBM_Z_SSH_USER", "linux1")
