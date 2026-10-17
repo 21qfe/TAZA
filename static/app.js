@@ -338,7 +338,7 @@ const APP_TRANSLATIONS = {
     tazaTalksInputPlaceholder: "Ask TazaTalks or type a question...",
     tazaTalksHelpCardTitle: "Need Further Assistance?",
     tazaTalksHelpCardDesc: "Our dedicated Kisan & Consumer Helpline is active 24/7 for Bengal agro-trade.",
-    tazaTalksCallBtnText: "Call Customer Care (6289069619)",
+    tazaTalksCallBtnText: "Call Customer Care (TAZA In-App Relay)",
     tazaTalksWelcomeConsumer: "👋 Hi! Welcome to <strong>TazaTalks Consumer Support</strong>. How can I help you today? Choose an FAQ below or ask any question!",
     tazaTalksWelcomeFarmer: "🌾 Welcome to <strong>TazaTalks Farmer & FPO Hub</strong>. Need help with warehouse booking, mandi rates, or payouts? Tap an FAQ below or ask anything!",
     tazaTalksFallbackMsg: "I couldn't find an automated answer for your specific query. You can connect directly with our 24/7 West Bengal Customer Care team right away:",
@@ -830,7 +830,7 @@ const APP_TRANSLATIONS = {
     tazaTalksInputPlaceholder: "ताजाटॉक्स से पूछें या टाइप करें...",
     tazaTalksHelpCardTitle: "सीधी सहायता की आवश्यकता है?",
     tazaTalksHelpCardDesc: "हमारी समर्पित किसान और उपभोक्ता हेल्पलाइन 24/7 सक्रिय है।",
-    tazaTalksCallBtnText: "कस्टमर केयर को कॉल करें (6289069619)",
+    tazaTalksCallBtnText: "कस्टमर केयर को कॉल करें (TAZA In-App Relay)",
     tazaTalksWelcomeConsumer: "👋 नमस्ते! <strong>ताजाटॉक्स उपभोक्ता सहायता</strong> में आपका स्वागत है। नीचे दिए गए प्रश्न देखें या कोई भी सवाल टाइप करें!",
     tazaTalksWelcomeFarmer: "🌾 <strong>ताजाटॉक्स किसान और एफपीओ हब</strong> में आपका स्वागत है। गोदाम बुकिंग, मंडी भाव या भुगतान संबंधी प्रश्न नीचे पूछें!",
     tazaTalksFallbackMsg: "आपके प्रश्न का स्वचालित उत्तर नहीं मिल सका। आप तुरंत हमारी 24/7 कस्टमर केयर टीम से संपर्क कर सकते हैं:",
@@ -5103,7 +5103,7 @@ function handleBackdropClick(event, modalId) {
 let tazaTalksCurrentRole = "consumer";
 let tazaTalksInitialized = false;
 
-const TAZA_TALKS_HELPLINE = "6289069619";
+const TAZA_TALKS_HELPLINE = "In-App Support Relay";
 
 const TAZA_TALKS_FAQS = {
   farmer: [
@@ -5390,7 +5390,7 @@ async function processTazaTalksQuery(query) {
     const answer = getLocalizedFaqText(bestFaq, "answer");
     appendTazaTalksMessage("bot", answer);
   } else {
-    // Fallback: Show customer care callout with phone 6289069619
+    // Fallback: Show customer care callout with phone TAZA In-App Relay
     const fallbackIntro = getTranslation("tazaTalksFallbackMsg", "I couldn't find an automated answer for your specific query. You can connect directly with our 24/7 West Bengal Customer Care team right away:");
     const helpCardTitle = getTranslation("tazaTalksHelpCardTitle", "Customer Care Call Relay");
     const helpCardDesc = (currentLanguage === "bn") 
@@ -5855,7 +5855,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.9,
     ordersCount: 184,
     responseTime: "< 10 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23301",
     badgeIcon: "sprout",
     specialties: ["Singur Royal Jyoti Potato", "Chandramukhi Premium Potato", "Fresh Farm Tomato", "Fresh Lau Shak"],
@@ -5882,7 +5882,7 @@ const FAVOURITE_FARMERS_DATA = [
       bulk: "Yes! For orders above 20kg, direct wholesale rate is ₹19.50/kg with complimentary pallet bagging and escrow protection.",
       quality: "100% naturally soil-cured for 14 days, zero sprout inhibitors or chemical washes. Safe for whole family consumption.",
       laushak: "Yes! Fresh Lau Shak is harvested daily before sunrise at ₹22/bunch.",
-      default: "Thank you for reaching out! I am actively packing orders at Singur gate right now. For instant urgent requests, feel free to call my gate relay directly at 6289069619."
+      default: "Thank you for reaching out! I am actively packing orders at Singur gate right now. For instant urgent requests, feel free to call my gate relay directly at TAZA In-App Relay."
     }
   },
   {
@@ -5901,7 +5901,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.8,
     ordersCount: 149,
     responseTime: "< 15 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23304",
     badgeIcon: "leaf",
     specialties: ["Pointed Gourd (Green Potol)", "Red Onion (Peyaj)", "Red Lentil (Masoor Dal)", "Bengal Moong Dal"],
@@ -5927,7 +5927,7 @@ const FAVOURITE_FARMERS_DATA = [
       quality: "All potol are Grade-A tender harvest, picked early morning before sunrise so the seeds stay soft and sweet.",
       delivery: "Today's 4:00 PM evening dispatch reaches Kolkata cold hubs before midnight for next-morning 7 AM doorstep delivery.",
       bulk: "Yes, we supply top Kolkata catering houses & cloud kitchens with 10kg crates at ₹28/kg.",
-      default: "Got your message! I am at the Nadia sorting yard right now. You can also dial our farmgate hotline directly at 6289069619."
+      default: "Got your message! I am at the Nadia sorting yard right now. You can also dial our farmgate hotline directly at TAZA In-App Relay."
     }
   },
   {
@@ -5946,7 +5946,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.95,
     ordersCount: 260,
     responseTime: "< 12 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23306",
     badgeIcon: "wheat",
     specialties: ["Aromatic Gobindobhog Rice", "Minikit Premium Rice", "Sona Moong Dal"],
@@ -5972,7 +5972,7 @@ const FAVOURITE_FARMERS_DATA = [
       quality: "100% certified authentic single-estate Gobindobhog, aged 12 months in aerated silos for peak aroma and non-sticky fluffiness.",
       bulk: "Yes! 25kg and 50kg moisture-sealed jute sacks are available with door dispatch across all districts.",
       cooking: "For our Minikit rice, ideal water-to-rice ratio is 2:1. Cook on medium heat for 12 minutes.",
-      default: "Thank you for reaching out! For instant rice inquiries or customized bulk milling, reach our mill gate at 6289069619."
+      default: "Thank you for reaching out! For instant rice inquiries or customized bulk milling, reach our mill gate at TAZA In-App Relay."
     }
   },
   {
@@ -5991,7 +5991,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.9,
     ordersCount: 215,
     responseTime: "< 8 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23305",
     badgeIcon: "mountain",
     specialties: ["Mountain Ginger (Ada)", "White Garlic (Rosun)", "Royal Apples", "Large Cardamom"],
@@ -6017,7 +6017,7 @@ const FAVOURITE_FARMERS_DATA = [
       quality: "Yes! High altitude volcanic soil gives our ginger 2.4x higher gingerol oil content than plains ginger.",
       logistics: "We utilize temperature-controlled Reefer vans running down NH10 directly connected to Kolkata distribution centers.",
       combo: "Absolutely! You can add both items to cart or message custom weights for direct crate packaging.",
-      default: "Thank you for supporting hill farmers! I am currently packing shipments. You can also reach our desk at 6289069619 anytime."
+      default: "Thank you for supporting hill farmers! I am currently packing shipments. You can also reach our desk at TAZA In-App Relay anytime."
     }
   },
   {
@@ -6036,7 +6036,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.88,
     ordersCount: 198,
     responseTime: "< 10 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23307",
     badgeIcon: "apple",
     specialties: ["Ruby Pomegranate", "Sweet Lime", "Bengal Banana", "Mango Orchards"],
@@ -6061,7 +6061,7 @@ const FAVOURITE_FARMERS_DATA = [
     faqReplies: {
       quality: "Every single batch is naturally ripened on tree branches with zero calcium carbide or artificial ripening gases.",
       logistics: "Malda-to-Kolkata express reefer departs at 8:00 PM nightly, arriving at city hubs by 5:00 AM.",
-      default: "Thank you for inquiring! Feel free to connect directly with our Malda fruit collection point at 6289069619."
+      default: "Thank you for inquiring! Feel free to connect directly with our Malda fruit collection point at TAZA In-App Relay."
     }
   },
   {
@@ -6080,7 +6080,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.85,
     ordersCount: 172,
     responseTime: "< 14 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23308",
     badgeIcon: "flower-2",
     specialties: ["Red Onion (Desi Peyaj)", "Desi Masoor Dal", "Green Bullet Chili", "Fresh Spinach"],
@@ -6105,7 +6105,7 @@ const FAVOURITE_FARMERS_DATA = [
     faqReplies: {
       quality: "Our river-basin red onions have thick protective skins and cure naturally in shade for exceptional 3-month shelf life.",
       bulk: "Yes! 50kg ventilated mesh bags are shipped at flat farmgate wholesale quotes.",
-      default: "Thank you for reaching out! For immediate Murshidabad dispatch scheduling, call our team at 6289069619."
+      default: "Thank you for reaching out! For immediate Murshidabad dispatch scheduling, call our team at TAZA In-App Relay."
     }
   },
   {
@@ -6124,7 +6124,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.92,
     ordersCount: 310,
     responseTime: "< 6 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23309",
     badgeIcon: "trees",
     specialties: ["Fresh Crisp Carrot", "Pointed Gourd", "Farm Tomato", "Fresh Green Peas"],
@@ -6149,7 +6149,7 @@ const FAVOURITE_FARMERS_DATA = [
     faqReplies: {
       speed: "Yes! Baruipur is just 28 km away. Our dedicated EV shuttle delivers harvest directly within 2 to 3 hours.",
       quality: "All carrots and tomatoes are washed in ozone-purified spring water and packed in breathable jute crates.",
-      default: "We are actively loading Baruipur shuttles right now. Dial our hotline directly at 6289069619 for urgent delivery."
+      default: "We are actively loading Baruipur shuttles right now. Dial our hotline directly at TAZA In-App Relay for urgent delivery."
     }
   },
   {
@@ -6168,7 +6168,7 @@ const FAVOURITE_FARMERS_DATA = [
     rating: 4.86,
     ordersCount: 165,
     responseTime: "< 12 mins",
-    phone: "6289069619",
+    phone: "In-App Support Relay",
     displayPhone: "+91 98302 23310",
     badgeIcon: "sun",
     specialties: ["Fresh Purple Brinjal (Begun)", "Singur Potato", "Green Capsicum", "Country Ridge Gourd"],
@@ -6193,7 +6193,7 @@ const FAVOURITE_FARMERS_DATA = [
     faqReplies: {
       quality: "Red laterite soil gives our brinjals unique sweetness with thin skin and silky texture. 100% pheromone trap protected.",
       bulk: "Wholesale crates (20kg+) receive a flat 15% farmgate discount with digital weight receipts.",
-      default: "Thank you for connecting with Bankura farmers! Reach our dispatch cell directly at 6289069619."
+      default: "Thank you for connecting with Bankura farmers! Reach our dispatch cell directly at TAZA In-App Relay."
     }
   }
 ];
